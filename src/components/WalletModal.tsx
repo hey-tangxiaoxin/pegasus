@@ -1,4 +1,5 @@
 import { Modal } from 'antd'
+import { CloseOutlined } from '@ant-design/icons'
 import type { WalletProvider } from '../types'
 import { getWalletIcon, RECOMMENDED_WALLETS } from '../constants'
 import styles from '../App.module.less'
@@ -51,10 +52,7 @@ export const WalletModal = ({ open, onClose, availableWallets, connectedWalletId
             <p className={styles.modalSubtitle}>Choose your preferred wallet</p>
           </div>
           <button className={styles.modalCloseBtn} onClick={onClose}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3.5 3.5L10.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <CloseOutlined />
           </button>
         </div>
       </div>
