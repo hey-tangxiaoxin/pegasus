@@ -1,0 +1,51 @@
+// Horse Web3 Logo - 马年主题
+export const LogoIcon = () => (
+  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* 六边形背景 - Web3元素 */}
+    <path 
+      d="M16 2L27.5 9V23L16 30L4.5 23V9L16 2Z" 
+      fill="url(#horseGradient)" 
+      opacity="0.15"
+    />
+    {/* 马头轮廓 */}
+    <path 
+      d="M20 7C20 7 22 8 23 10C24 12 23 14 22 15L21 16C21 16 22 17 22 19C22 21 20 23 18 24L16 25L14 24C12 23 11 21 11 19L11 17C10 16 9 15 9 13C9 11 10 9 12 8L14 7L16 6L18 6.5L20 7Z"
+      stroke="currentColor" 
+      strokeWidth="1.5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      fill="none"
+    />
+    {/* 马鬃毛 */}
+    <path 
+      d="M14 7C14 7 13 5 14 4C15 3 17 3 18 4"
+      stroke="currentColor" 
+      strokeWidth="1.5" 
+      strokeLinecap="round"
+      fill="none"
+    />
+    {/* 马眼睛 */}
+    <circle cx="15" cy="12" r="1.5" fill="currentColor"/>
+    {/* 马耳朵 */}
+    <path 
+      d="M18 6.5L19 4L20.5 6"
+      stroke="currentColor" 
+      strokeWidth="1.5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      fill="none"
+    />
+    {/* 链条节点 - Web3元素 */}
+    <circle cx="7" cy="16" r="2" stroke="currentColor" strokeWidth="1" fill="none"/>
+    <circle cx="25" cy="16" r="2" stroke="currentColor" strokeWidth="1" fill="none"/>
+    <path d="M9 16H11" stroke="currentColor" strokeWidth="1"/>
+    <path d="M21 16H23" stroke="currentColor" strokeWidth="1"/>
+    {/* 渐变定义 */}
+    <defs>
+      <linearGradient id="horseGradient" x1="4.5" y1="2" x2="27.5" y2="30" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#8b5cf6"/>
+        <stop offset="1" stopColor="#a855f7"/>
+      </linearGradient>
+    </defs>
+  </svg>
+)

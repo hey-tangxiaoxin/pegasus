@@ -1,0 +1,129 @@
+// ============================================
+// Global Styles
+// ============================================
+
+@import './variables.less';
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: @font-body;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: @color-bg;
+  background-image: 
+    radial-gradient(ellipse at center, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at top right, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom left, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+  color: @color-text;
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+// Ant Design Overrides
+.ant-modal-content {
+  background: @color-bg-card !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  border-radius: @radius-xl !important;
+}
+
+.ant-modal-header {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+.ant-modal-title {
+  font-family: @font-heading !important;
+  color: @color-text !important;
+}
+
+.ant-modal-close {
+  color: @color-text-muted !important;
+  &:hover { color: @color-text !important; }
+}
+
+.ant-input {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  border-radius: @radius-md !important;
+  font-family: @font-body !important;
+  color: @color-text !important;
+  
+  &:hover { border-color: rgba(139, 92, 246, 0.3) !important; }
+  &:focus {
+    border-color: @color-accent !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), @glow-accent !important;
+  }
+  &::placeholder { color: @color-text-muted !important; }
+}
+
+.ant-btn-primary {
+  background: @gradient-accent !important;
+  border: none !important;
+  font-family: @font-body !important;
+  font-weight: 600 !important;
+  border-radius: @radius-md !important;
+  
+  &:hover { box-shadow: @glow-accent, 0 8px 25px rgba(139, 92, 246, 0.4) !important; }
+  &:active, &:focus {
+    transform: none !important;
+    outline: none !important;
+    border: none !important;
+  }
+}
+
+.ant-btn::after { display: none !important; }
+.ant-wave { display: none !important; }
+
+.ant-form-item-label > label {
+  color: @color-text-secondary !important;
+  font-family: @font-body !important;
+}
+
+.ant-form-item-explain-error {
+  font-family: @font-body !important;
+}
+
+// Wallet Modal
+.wallet-modal .ant-modal-content {
+  background: linear-gradient(180deg, #0f172a 0%, #0a0a0f 100%) !important;
+  border: 1px solid rgba(139, 92, 246, 0.2) !important;
+  border-radius: @radius-xl !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  box-shadow: 
+    0 0 0 1px rgba(139, 92, 246, 0.1),
+    0 25px 60px -12px rgba(0, 0, 0, 0.7),
+    0 0 50px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.wallet-modal .ant-modal-header,
+.wallet-modal .ant-modal-close { display: none !important; }
+.wallet-modal .ant-modal-body { padding: 0 !important; }
+
+// Reduced Motion
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

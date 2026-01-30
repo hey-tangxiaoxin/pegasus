@@ -1,0 +1,152 @@
+@import '../styles/variables.less';
+
+// Network Option
+.networkOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.networkOptionContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.networkOptionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.networkName {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.selectedIcon {
+  color: @color-success;
+  font-size: 14px;
+}
+
+.currencySymbol {
+  font-size: 12px;
+}
+
+// Selected Label
+.selectedLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.placeholderIcon {
+  font-size: 16px;
+  color: #8c8c8c;
+}
+
+.selectedName {
+  font-weight: 500;
+}
+
+// Card
+.selectorCard {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+}
+
+.cardContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardIcon {
+  font-size: 20px;
+  color: #fff;
+}
+
+.cardTitle {
+  color: #fff;
+  font-size: 14px;
+}
+
+// Select
+.networkSelect {
+  min-width: 220px;
+}
+
+// Labels
+.mainnetLabel {
+  padding: 8px 4px 4px;
+  color: #1890ff;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.testnetLabel {
+  padding: 8px 4px 4px;
+  color: #fa8c16;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 4px;
+}
+
+// Status
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: @color-success;
+  box-shadow: @glow-success;
+}
+
+.statusText {
+  color: #fff;
+  font-size: 12px;
+}
+
+.unknownIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 77, 79, 0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.unknownDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: @color-error;
+}
+
+.unknownText {
+  color: #fff;
+  font-size: 12px;
+}
