@@ -9,7 +9,7 @@
   padding: 80px 20px;
   min-height: 60vh;
   position: relative;
-  
+
   // 从中间向边缘扩散的渐变背景
   &::before {
     content: '';
@@ -19,17 +19,15 @@
     transform: translate(-50%, -50%);
     width: 100%;
     height: 100%;
-    background: radial-gradient(
-      ellipse 60% 50% at center,
-      rgba(139, 92, 246, 0.15) 0%,
-      rgba(139, 92, 246, 0.08) 30%,
-      rgba(139, 92, 246, 0.03) 50%,
-      transparent 70%
-    );
+    background: radial-gradient(ellipse 60% 50% at center,
+        rgba(139, 92, 246, 0.15) 0%,
+        rgba(139, 92, 246, 0.08) 30%,
+        rgba(139, 92, 246, 0.03) 50%,
+        transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
-  
+
   h2 {
     font-family: @font-heading;
     font-size: 42px;
@@ -38,30 +36,25 @@
     letter-spacing: 0.02em;
     position: relative;
     z-index: 1;
-    background: linear-gradient(
-      90deg,
-      @color-text 0%,
-      @color-text 40%,
-      #a78bfa 50%,
-      @color-text 60%,
-      @color-text 100%
-    );
+    background: linear-gradient(90deg,
+        @color-text 0%,
+        @color-text 40%,
+        #a78bfa 50%,
+        @color-text 60%,
+        @color-text 100%);
     background-size: 200% 100%;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: textShimmer 3s ease-in-out infinite;
   }
-  
+
   p {
     font-family: @font-body;
     font-size: 16px;
     color: rgba(203, 213, 225, 0.9);
-    margin-bottom: 36px;
     max-width: 400px;
     line-height: 1.5;
-    position: relative;
-    z-index: 1;
   }
 }
 
@@ -75,13 +68,13 @@
   background: linear-gradient(145deg, #7c3aed 0%, #8b5cf6 50%, #9333ea 100%);
   border: 1px solid rgba(167, 139, 250, 0.3);
   border-radius: 22px;
-  box-shadow: 
+  box-shadow:
     0 0 60px rgba(139, 92, 246, 0.5),
     0 0 120px rgba(139, 92, 246, 0.25);
   animation: iconFloat 3s ease-in-out infinite;
   position: relative;
   z-index: 1;
-  
+
   .anticon {
     font-size: 64px;
     color: rgba(255, 255, 255, 0.95);
@@ -89,9 +82,12 @@
 }
 
 @keyframes iconFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-12px);
   }
@@ -101,6 +97,7 @@
   0% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: -100% 50%;
   }
@@ -120,53 +117,131 @@
   font-weight: 600;
   cursor: pointer;
   transition: @transition-normal;
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(139, 92, 246, 0.3),
     0 4px 15px rgba(139, 92, 246, 0.25);
   position: relative;
   z-index: 1;
-  
+
   &:hover {
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(139, 92, 246, 0.4),
       0 8px 25px rgba(139, 92, 246, 0.35);
   }
-  
-  &:active, &:focus {
+
+  &:active,
+  &:focus {
     transform: none;
     outline: none;
     border: none;
   }
 }
 
-.typewriter {
+// 打字机容器 - 使用 inline-flex 让光标跟随文字
+.typewriterWrapper {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 36px;
+  height: 24px; // 固定高度确保垂直居中
+}
+
+// 文字部分 - 有 overflow hidden 和 width 动画
+.typewriterText {
+  display: inline-flex;
+  align-items: center;
   overflow: hidden;
   white-space: nowrap;
-  border-right: 2px solid @color-accent;
   width: 0;
-  animation: 
-    typing 3s steps(47, end) infinite,
+  height: 100%;
+  font-family: @font-body;
+  font-size: 16px;
+  color: rgba(203, 213, 225, 0.9);
+  // 47 个字符，使用 steps(47) 按字母分界
+  animation: typing 12s steps(47) infinite;
+}
+
+// 光标 - 独立元素，不受 overflow hidden 影响
+.cursor {
+  display: inline-flex;
+  align-items: center;
+  width: 1.5px;
+  height: 14px; // 与字体大小一致
+  margin-left: 3px;
+  margin-top: 5px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background-color: @color-accent;
+  opacity: 0; // 默认隐藏
+  // 同步打字动画：文字出现时才显示光标
+  animation:
+    cursorShow 12s steps(1) infinite,
     cursorBlink 0.8s step-end infinite;
 }
 
 @keyframes typing {
+
+  // 初始状态
   0% {
     width: 0;
   }
-  50%, 90% {
+
+  // 打字完成
+  35% {
     width: 100%;
   }
-  95%, 100% {
+
+  // 保持显示
+  50% {
+    width: 100%;
+  }
+
+  // 原路撤回完成
+  85% {
+    width: 0;
+  }
+
+  // 保持空白
+  100% {
     width: 0;
   }
 }
 
-@keyframes cursorBlink {
-  0%, 100% {
-    border-color: @color-accent;
+// 光标显示/隐藏动画 - 与打字动画同步
+@keyframes cursorShow {
+
+  // 开始前隐藏
+  0% {
+    opacity: 0;
   }
+
+  // 打字开始时显示（稍微延迟一点）
+  0.1% {
+    opacity: 1;
+  }
+
+  // 打字和撤回过程中保持显示
+  85% {
+    opacity: 1;
+  }
+
+  // 撤回完成后隐藏
+  85.1%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes cursorBlink {
+
+  0%,
+  100% {
+    background-color: @color-accent;
+  }
+
   50% {
-    border-color: transparent;
+    background-color: transparent;
   }
 }
 
@@ -179,7 +254,7 @@
   .welcomeSection h2 {
     font-size: 32px;
   }
-  
+
   .welcomeSection p {
     font-size: 16px;
   }

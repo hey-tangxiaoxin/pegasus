@@ -12,7 +12,10 @@ export const WelcomeSection = ({ onConnect }: WelcomeSectionProps) => {
         <WalletOutlined />
       </div>
       <h2>Welcome to Pegasus</h2>
-      <p className={styles.typewriter}>Connect your wallet to manage your crypto assets</p>
+      <div className={styles.typewriterWrapper}>
+        <span className={styles.typewriterText}>Connect your wallet to manage your crypto assets</span>
+        <span className={styles.cursor} />
+      </div>
       <button className={styles.welcomeBtn} onClick={onConnect}>
         <WalletOutlined className={styles.iconMarginRight} />
         Connect Wallet
