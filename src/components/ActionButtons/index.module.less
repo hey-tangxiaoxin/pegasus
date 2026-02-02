@@ -1,0 +1,77 @@
+@import '../../styles/variables.less';
+
+.actionContainer {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: @color-bg-card;
+  border-radius: @radius-lg;
+  border: 1px solid @color-border;
+}
+
+.actionButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform @transition-normal, opacity @transition-normal;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+
+    .iconWrapper {
+      background: var(--action-color);
+      box-shadow: 0 4px 20px color-mix(in srgb, var(--action-color) 40%, transparent);
+    }
+
+    .actionIcon {
+      color: #fff;
+    }
+
+    .actionLabel {
+      color: @color-text;
+    }
+  }
+
+  &:active, &:focus, &:focus-visible {
+    transform: none;
+    outline: none;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: @color-bg-hover;
+  border: 1px solid @color-border;
+  transition: all @transition-normal;
+}
+
+.actionIcon {
+  font-size: 22px;
+  color: var(--action-color);
+  transition: color @transition-normal;
+}
+
+.actionLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: @color-text-secondary;
+  font-family: @font-body;
+  transition: color @transition-normal;
+}

@@ -60,30 +60,96 @@
 .cardContent {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   flex-wrap: wrap;
+  gap: 24px;
+}
+
+.selectorGroup {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
 .cardHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .cardIcon {
-  font-size: 20px;
+  font-size: 18px;
   color: #fff;
 }
 
 .cardTitle {
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 // Select
 .networkSelect {
-  min-width: 220px;
+  min-width: 200px;
+}
+
+.accountSelect {
+  min-width: 180px;
+}
+
+// Account Option
+.accountOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.accountOptionAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.accountOptionContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.accountOptionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.accountName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.accountAddress {
+  font-size: 11px;
+}
+
+// Account Avatar in selected label
+.accountAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 11px;
 }
 
 // Labels

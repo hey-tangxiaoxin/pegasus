@@ -1,9 +1,10 @@
 import { memo, useMemo } from 'react'
 import { Card, Select, Badge, Tooltip, Typography } from 'antd'
-import { GlobalOutlined, CheckCircleFilled } from '@ant-design/icons'
-import type { NetworkConfig } from '../../types'
+import { GlobalOutlined, CheckCircleFilled, UserOutlined } from '@ant-design/icons'
+import type { NetworkConfig, AccountInfo } from '../../types'
 import { SUPPORTED_NETWORKS, getGroupedNetworks } from '../../constants'
 import { NetworkIcon } from '../NetworkIcon'
+import { formatAddress } from '../../utils/format'
 import styles from './index.module.less'
 
 const { Text } = Typography
@@ -13,6 +14,9 @@ interface NetworkSelectorProps {
   isNetworkSwitching: boolean
   isDisabled: boolean
   onNetworkSwitch: (chainId: string) => void
+  accounts: AccountInfo[]
+  selectedAccountIndex: number
+  onAccountChange: (index: number) => void
 }
 
 // Testnet badge style - extracted as constant to avoid recreation
@@ -52,6 +56,9 @@ export const NetworkSelector = memo(({
   isNetworkSwitching,
   isDisabled,
   onNetworkSwitch,
+  accounts,
+  selectedAccountIndex,
+  onAccountChange,
 }: NetworkSelectorProps) => {
   // Memoize current network lookup
   const currentNetwork = useMemo(() => 
@@ -83,6 +90,27 @@ export const NetworkSelector = memo(({
     )
   }
 
+  const selectedAccount = accounts[selectedAccountIndex]
+
+  const renderAccountLabel = () => {
+    if (!selectedAccount) {
+      return (
+        <div className={styles.selectedLabel}>
+          <UserOutlined className={styles.placeholderIcon} />
+          <span>Select Account</span>
+        </div>
+      )
+    }
+    return (
+      <div className={styles.selectedLabel}>
+        <div className={styles.accountAvatar}>
+          {selectedAccount.name.charAt(0).toUpperCase()}
+        </div>
+        <span className={styles.selectedName}>{selectedAccount.name}</span>
+      </div>
+    )
+  }
+
   return (
     <Card 
       size="small" 
@@ -90,39 +118,81 @@ export const NetworkSelector = memo(({
       styles={{ body: { padding: '12px 16px' } }}
     >
       <div className={styles.cardContent}>
-        <div className={styles.cardHeader}>
-          <GlobalOutlined className={styles.cardIcon} />
-          <Text strong className={styles.cardTitle}>Network</Text>
-        </div>
-        
-        <Select
-          value={currentChainId || undefined}
-          onChange={onNetworkSwitch}
-          loading={isNetworkSwitching}
-          disabled={isDisabled || isNetworkSwitching}
-          className={styles.networkSelect}
-          placeholder="Select Network"
-          labelRender={renderSelectedLabel}
-          dropdownStyle={{ borderRadius: '12px', padding: '8px' }}
-          popupMatchSelectWidth={280}
-        >
-          <Select.OptGroup label={<div className={styles.mainnetLabel}>Mainnets</div>}>
-            {mainnetList.map(([chainId, network]) => (
-              <Select.Option key={chainId} value={chainId}>
-                {renderNetworkOption(chainId, network, chainId === currentChainId)}
-              </Select.Option>
-            ))}
-          </Select.OptGroup>
+        {/* Network Selector */}
+        <div className={styles.selectorGroup}>
+          <div className={styles.cardHeader}>
+            <GlobalOutlined className={styles.cardIcon} />
+            <Text strong className={styles.cardTitle}>Network</Text>
+          </div>
           
-          <Select.OptGroup label={<div className={styles.testnetLabel}>Testnets</div>}>
-            {testnetList.map(([chainId, network]) => (
-              <Select.Option key={chainId} value={chainId}>
-                {renderNetworkOption(chainId, network, chainId === currentChainId)}
+          <Select
+            value={currentChainId || undefined}
+            onChange={onNetworkSwitch}
+            loading={isNetworkSwitching}
+            disabled={isDisabled || isNetworkSwitching}
+            className={styles.networkSelect}
+            placeholder="Select Network"
+            labelRender={renderSelectedLabel}
+            dropdownStyle={{ borderRadius: '12px', padding: '8px' }}
+            popupMatchSelectWidth={280}
+          >
+            <Select.OptGroup label={<div className={styles.mainnetLabel}>Mainnets</div>}>
+              {mainnetList.map(([chainId, network]) => (
+                <Select.Option key={chainId} value={chainId}>
+                  {renderNetworkOption(chainId, network, chainId === currentChainId)}
+                </Select.Option>
+              ))}
+            </Select.OptGroup>
+            
+            <Select.OptGroup label={<div className={styles.testnetLabel}>Testnets</div>}>
+              {testnetList.map(([chainId, network]) => (
+                <Select.Option key={chainId} value={chainId}>
+                  {renderNetworkOption(chainId, network, chainId === currentChainId)}
+                </Select.Option>
+              ))}
+            </Select.OptGroup>
+          </Select>
+        </div>
+
+        {/* Account Selector */}
+        <div className={styles.selectorGroup}>
+          <div className={styles.cardHeader}>
+            <UserOutlined className={styles.cardIcon} />
+            <Text strong className={styles.cardTitle}>Account</Text>
+          </div>
+          
+          <Select
+            value={selectedAccountIndex}
+            onChange={onAccountChange}
+            disabled={accounts.length === 0}
+            className={styles.accountSelect}
+            placeholder="Select Account"
+            labelRender={renderAccountLabel}
+            dropdownStyle={{ borderRadius: '12px', padding: '8px' }}
+            popupMatchSelectWidth={240}
+          >
+            {accounts.map((account, index) => (
+              <Select.Option key={account.address} value={index}>
+                <div className={styles.accountOption}>
+                  <div className={styles.accountOptionAvatar}>
+                    {account.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className={styles.accountOptionContent}>
+                    <div className={styles.accountOptionHeader}>
+                      <Text strong className={styles.accountName}>{account.name}</Text>
+                      {index === selectedAccountIndex && <CheckCircleFilled className={styles.selectedIcon} />}
+                    </div>
+                    <Text type="secondary" className={styles.accountAddress}>
+                      {formatAddress(account.address)}
+                    </Text>
+                  </div>
+                </div>
               </Select.Option>
             ))}
-          </Select.OptGroup>
-        </Select>
+          </Select>
+        </div>
 
+        {/* Status Indicator */}
         {currentNetwork && (
           <Tooltip title={`Connected to ${currentNetwork.chainName}`}>
             <div className={styles.statusIndicator}>

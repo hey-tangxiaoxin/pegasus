@@ -48,16 +48,35 @@ body {
 .ant-modal-header {
   background: transparent !important;
   border-bottom: none !important;
+  padding: 16px 24px !important;
 }
 
 .ant-modal-title {
   font-family: @font-heading !important;
-  color: @color-text !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
+  
+  // 确保 title 内的所有文字都是白色
+  span, div, * {
+    color: #ffffff !important;
+  }
 }
 
 .ant-modal-close {
-  color: @color-text-muted !important;
-  &:hover { color: @color-text !important; }
+  color: #94a3b8 !important;
+  &:hover { 
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+.ant-modal-close-x {
+  color: #94a3b8 !important;
+}
+
+.ant-modal-body {
+  padding: 24px !important;
 }
 
 .ant-input {
@@ -65,7 +84,7 @@ body {
   border: 1px solid rgba(139, 92, 246, 0.15) !important;
   border-radius: @radius-md !important;
   font-family: @font-body !important;
-  color: @color-text !important;
+  color: #ffffff !important;
   
   &:hover { border-color: rgba(139, 92, 246, 0.3) !important; }
   &:focus {
@@ -75,31 +94,181 @@ body {
   &::placeholder { color: @color-text-muted !important; }
 }
 
+// InputNumber 样式
+.ant-input-number {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  border-radius: @radius-md !important;
+  
+  &:hover { border-color: rgba(139, 92, 246, 0.3) !important; }
+  &:focus, &:focus-within {
+    border-color: @color-accent !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+  }
+}
+
+.ant-input-number-input {
+  color: #ffffff !important;
+  &::placeholder { color: @color-text-muted !important; }
+}
+
+.ant-input-number-prefix {
+  color: #94a3b8 !important;
+}
+
+.ant-input-number-group-addon {
+  background: @color-bg-hover !important;
+  border-color: rgba(139, 92, 246, 0.15) !important;
+  color: #94a3b8 !important;
+}
+
+// Select 样式
+.ant-select-selector {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  border-radius: @radius-md !important;
+}
+
+.ant-select:hover .ant-select-selector {
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+.ant-select-focused .ant-select-selector {
+  border-color: @color-accent !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+}
+
+.ant-select-selection-item {
+  color: #ffffff !important;
+}
+
+.ant-select-selection-placeholder {
+  color: @color-text-muted !important;
+}
+
+.ant-select-arrow {
+  color: #94a3b8 !important;
+}
+
+// Select Dropdown
+.ant-select-dropdown {
+  background: @color-bg-card !important;
+  border: 1px solid @color-border !important;
+  border-radius: @radius-md !important;
+}
+
+.ant-select-item {
+  color: #ffffff !important;
+}
+
+.ant-select-item-option-active {
+  background: @color-bg-hover !important;
+}
+
+.ant-select-item-option-selected {
+  background: rgba(139, 92, 246, 0.2) !important;
+}
+
+.ant-select-item-group {
+  color: #94a3b8 !important;
+}
+
+// ============================================
+// 全局按钮样式 - 统一去除 action 效果
+// ============================================
+
+// Ant Design 按钮基础样式
+.ant-btn {
+  transition: box-shadow @transition-normal, background @transition-normal !important;
+  
+  &:active, &:focus, &:focus-visible {
+    transform: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// 禁用 Ant Design 的波纹效果
+.ant-btn::after { display: none !important; }
+.ant-wave { display: none !important; }
+:where(.css-dev-only-do-not-override-*).ant-btn::after,
+.ant-btn-compact-item::after {
+  display: none !important;
+}
+
+// Ant Design Primary 按钮
 .ant-btn-primary {
   background: @gradient-accent !important;
   border: none !important;
   font-family: @font-body !important;
   font-weight: 600 !important;
   border-radius: @radius-md !important;
+  color: #ffffff !important;
   
-  &:hover { box-shadow: @glow-accent, 0 8px 25px rgba(139, 92, 246, 0.4) !important; }
-  &:active, &:focus {
+  &:hover:not(:disabled) { 
+    box-shadow: @glow-accent, 0 8px 25px rgba(139, 92, 246, 0.4) !important; 
+  }
+  
+  &:active, &:focus, &:focus-visible {
     transform: none !important;
     outline: none !important;
     border: none !important;
+    box-shadow: none !important;
+    background: @gradient-accent !important;
   }
 }
 
-.ant-btn::after { display: none !important; }
-.ant-wave { display: none !important; }
+// ============================================
+// 自定义按钮全局 Mixin
+// ============================================
 
+// 通用按钮基础样式 - 去除 action 效果
+.btn-reset() {
+  &:active, &:focus, &:focus-visible {
+    transform: none !important;
+    outline: none !important;
+  }
+}
+
+// 自定义 button 元素的全局样式
+button {
+  &:focus, &:focus-visible {
+    outline: none;
+  }
+}
+
+// Form label 样式 - 强制白色
 .ant-form-item-label > label {
-  color: @color-text-secondary !important;
+  color: #ffffff !important;
   font-family: @font-body !important;
+  font-weight: 500 !important;
+}
+
+.ant-form-item-label > label.ant-form-item-required::before {
+  color: @color-error !important;
 }
 
 .ant-form-item-explain-error {
   font-family: @font-body !important;
+  color: @color-error !important;
+}
+
+// Typography 样式
+.ant-typography {
+  color: #ffffff !important;
+}
+
+.ant-typography-secondary {
+  color: #94a3b8 !important;
+}
+
+.ant-typography strong {
+  color: #ffffff !important;
+}
+
+// Spin 加载样式
+.ant-spin-dot-item {
+  background-color: @color-accent !important;
 }
 
 // Wallet Modal

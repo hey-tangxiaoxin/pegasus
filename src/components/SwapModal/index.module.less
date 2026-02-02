@@ -1,0 +1,380 @@
+@import '../../styles/variables.less';
+
+@color-swap: #8b5cf6;
+@color-swap-light: #a78bfa;
+@color-swap-dark: #7c3aed;
+
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.swapModal {
+  :global(.ant-modal-content) {
+    background: linear-gradient(165deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 10, 15, 0.99) 100%) !important;
+    border: 1px solid rgba(139, 92, 246, 0.25) !important;
+    border-radius: 20px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 
+      0 0 0 1px rgba(139, 92, 246, 0.1),
+      0 25px 60px -12px rgba(0, 0, 0, 0.8),
+      0 0 80px rgba(139, 92, 246, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+    animation: modalSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 120px;
+      background: linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, transparent 100%);
+      pointer-events: none;
+    }
+  }
+
+  :global(.ant-modal-body) {
+    padding: 0 !important;
+  }
+}
+
+.modalHeader {
+  padding: 28px 28px 20px;
+  border-bottom: none;
+  position: relative;
+  z-index: 1;
+}
+
+.modalHeaderContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.titleIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: @color-swap;
+  box-shadow: 
+    0 4px 12px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05) rotate(180deg);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+  }
+}
+
+.modalTitle {
+  font-family: @font-heading;
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, @color-swap-light 0%, @color-swap 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
+}
+
+.modalSubtitle {
+  font-family: @font-body;
+  font-size: 13px;
+  color: @color-text-secondary;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.modalCloseBtn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 10px;
+  color: @color-swap;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    transform: rotate(90deg);
+  }
+
+  &:active, &:focus, &:focus-visible {
+    transform: rotate(90deg) scale(0.95);
+    outline: none;
+  }
+}
+
+.modalContent {
+  padding: 0 28px 28px;
+}
+
+.tokenBox {
+  position: relative;
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.6) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+
+  &:hover, &:focus-within {
+    border-color: rgba(139, 92, 246, 0.45);
+    box-shadow: 
+      0 0 30px rgba(139, 92, 246, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+}
+
+.tokenBoxHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tokenBoxLabel {
+  font-size: 12px;
+  color: @color-text-secondary;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tokenBalance {
+  font-size: 12px;
+  color: @color-text-secondary;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: @color-swap-light;
+  }
+}
+
+.tokenInputRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tokenInput {
+  flex: 1;
+  
+  :global(.ant-input-number-input) {
+    padding: 0;
+    color: #fff !important;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+}
+
+.tokenSelect {
+  width: 140px;
+
+  :global(.ant-select-selector) {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+    border: 1px solid rgba(139, 92, 246, 0.35) !important;
+    border-radius: 12px !important;
+    height: 44px !important;
+    transition: all 0.25s ease !important;
+    
+    &:hover {
+      border-color: rgba(139, 92, 246, 0.6) !important;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+    }
+  }
+
+  :global(.ant-select-selection-item) {
+    line-height: 44px !important;
+    font-weight: 700;
+    color: #fff !important;
+  }
+}
+
+.maxBtn {
+  position: absolute;
+  right: 160px;
+  bottom: 24px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.15) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  color: @color-swap-light;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.35);
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.25);
+    transform: scale(1.05);
+  }
+
+  &:active, &:focus, &:focus-visible {
+    transform: scale(0.98);
+    outline: none;
+  }
+}
+
+.swapBtnWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+  position: relative;
+  z-index: 2;
+}
+
+.swapBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.15);
+  border: none;
+  color: @color-swap-light;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+
+  &:hover {
+    background: @color-swap;
+    color: #fff;
+  }
+
+  &:focus, &:focus-visible {
+    outline: none;
+  }
+}
+
+.rateBox {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.6) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 14px;
+  padding: 18px;
+  margin: 20px 0 24px;
+  backdrop-filter: blur(10px);
+}
+
+.rateRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  & + & {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(139, 92, 246, 0.1);
+  }
+}
+
+.rateLabel {
+  font-size: 13px;
+  color: @color-text-secondary;
+  font-weight: 500;
+}
+
+.rateValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.rateValueGreen {
+  font-size: 14px;
+  font-weight: 700;
+  color: #22c55e;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+}
+
+.submitBtn {
+  height: 52px;
+  background: linear-gradient(135deg, @color-swap 0%, @color-swap-dark 100%) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 25px rgba(139, 92, 246, 0.35),
+      0 0 40px rgba(139, 92, 246, 0.2) !important;
+    
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active, &:focus, &:focus-visible {
+    transform: translateY(0) !important;
+    outline: none !important;
+  }
+}
+
+.footerHint {
+  margin-top: 24px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.03) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.footerHintIcon {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.footerHintText {
+  font-size: 12px;
+  color: @color-text-secondary;
+  font-family: @font-body;
+  margin: 0;
+  line-height: 1.5;
+  opacity: 0.9;
+}
