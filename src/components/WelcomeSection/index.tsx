@@ -1,5 +1,5 @@
 import { WalletOutlined } from '@ant-design/icons'
-import styles from '../../App.module.less'
+import styles from './index.module.less'
 
 interface WelcomeSectionProps {
   onConnect: () => void

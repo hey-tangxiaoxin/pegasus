@@ -1,0 +1,184 @@
+@import '../../styles/variables.less';
+
+.appHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: @spacing-md @spacing-xl;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.appLogo {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  border-radius: 12px;
+  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.4));
+  
+  svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+}
+
+.appTitle {
+  font-family: @font-heading;
+  font-size: 24px;
+  font-weight: 700;
+  background: @gradient-text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.walletStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: @radius-round;
+  font-family: @font-body;
+  font-size: 14px;
+  font-weight: 500;
+  color: @color-text;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: @color-success;
+  box-shadow: @glow-success;
+  animation: pulse 2s infinite;
+}
+
+.headerBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.switchBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: @radius-round;
+  color: @color-accent-light;
+  font-family: @font-body;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: @transition-normal;
+  
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+  
+  &:active, &:focus {
+    transform: none;
+    outline: none;
+  }
+}
+
+.disconnectBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: @radius-round;
+  color: @color-error;
+  font-family: @font-body;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: @transition-normal;
+  
+  &:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  
+  &:active, &:focus {
+    transform: none;
+    outline: none;
+  }
+}
+
+.connectBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: @gradient-accent;
+  border: none;
+  border-radius: @radius-round;
+  color: white;
+  font-family: @font-body;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: @transition-normal;
+  box-shadow: @glow-accent;
+  
+  &:hover {
+    box-shadow: @glow-accent, 0 8px 25px rgba(139, 92, 246, 0.4);
+  }
+  
+  &:active, &:focus {
+    transform: none;
+    outline: none;
+    border: none;
+  }
+}
+
+.iconMarginRight {
+  margin-right: 4px;
+}
+
+.iconMarginLeft {
+  margin-left: 4px;
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .appHeader {
+    padding: @spacing-md;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .appTitle {
+    font-size: 20px;
+  }
+}

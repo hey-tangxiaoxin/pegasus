@@ -1,7 +1,7 @@
 import { Form, Input, Button } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { SendOutlined } from '@ant-design/icons'
-import styles from '../../App.module.less'
+import styles from './index.module.less'
 
 interface TransferFormProps {
   form: FormInstance

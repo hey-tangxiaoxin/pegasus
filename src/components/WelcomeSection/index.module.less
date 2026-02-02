@@ -1,0 +1,186 @@
+@import '../../styles/variables.less';
+
+.welcomeSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 20px;
+  min-height: 60vh;
+  position: relative;
+  
+  // 从中间向边缘扩散的渐变背景
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse 60% 50% at center,
+      rgba(139, 92, 246, 0.15) 0%,
+      rgba(139, 92, 246, 0.08) 30%,
+      rgba(139, 92, 246, 0.03) 50%,
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  h2 {
+    font-family: @font-heading;
+    font-size: 42px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: 0.02em;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(
+      90deg,
+      @color-text 0%,
+      @color-text 40%,
+      #a78bfa 50%,
+      @color-text 60%,
+      @color-text 100%
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: textShimmer 3s ease-in-out infinite;
+  }
+  
+  p {
+    font-family: @font-body;
+    font-size: 16px;
+    color: rgba(203, 213, 225, 0.9);
+    margin-bottom: 36px;
+    max-width: 400px;
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.welcomeIcon {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #7c3aed 0%, #8b5cf6 50%, #9333ea 100%);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 22px;
+  box-shadow: 
+    0 0 60px rgba(139, 92, 246, 0.5),
+    0 0 120px rgba(139, 92, 246, 0.25);
+  animation: iconFloat 3s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+  
+  .anticon {
+    font-size: 64px;
+    color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+@keyframes iconFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes textShimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: -100% 50%;
+  }
+}
+
+.welcomeBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: @gradient-accent;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-family: @font-body;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: @transition-normal;
+  box-shadow: 
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 4px 15px rgba(139, 92, 246, 0.25);
+  position: relative;
+  z-index: 1;
+  
+  &:hover {
+    box-shadow: 
+      0 0 30px rgba(139, 92, 246, 0.4),
+      0 8px 25px rgba(139, 92, 246, 0.35);
+  }
+  
+  &:active, &:focus {
+    transform: none;
+    outline: none;
+    border: none;
+  }
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid @color-accent;
+  width: 0;
+  animation: 
+    typing 3s steps(47, end) infinite,
+    cursorBlink 0.8s step-end infinite;
+}
+
+@keyframes typing {
+  0% {
+    width: 0;
+  }
+  50%, 90% {
+    width: 100%;
+  }
+  95%, 100% {
+    width: 0;
+  }
+}
+
+@keyframes cursorBlink {
+  0%, 100% {
+    border-color: @color-accent;
+  }
+  50% {
+    border-color: transparent;
+  }
+}
+
+.iconMarginRight {
+  margin-right: 4px;
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .welcomeSection h2 {
+    font-size: 32px;
+  }
+  
+  .welcomeSection p {
+    font-size: 16px;
+  }
+}

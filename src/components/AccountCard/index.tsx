@@ -3,7 +3,7 @@ import { CopyOutlined } from '@ant-design/icons'
 import type { AccountInfo, TokenInfo } from '../../types'
 import { copyToClipboard } from '../../utils'
 import { formatAddress, formatBalance } from '../../utils/format'
-import styles from '../../App.module.less'
+import styles from './index.module.less'
 
 interface AccountCardProps {
   account: AccountInfo

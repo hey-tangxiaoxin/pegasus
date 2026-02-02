@@ -1,7 +1,7 @@
 import { WalletOutlined, DisconnectOutlined, SwapOutlined } from '@ant-design/icons'
 import { LogoIcon } from '../Logo'
 import { formatAddress } from '../../utils/format'
-import styles from '../../App.module.less'
+import styles from './index.module.less'
 
 interface HeaderProps {
   account: string

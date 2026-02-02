@@ -2,7 +2,7 @@ import { Modal } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import type { WalletProvider } from '../../types'
 import { getWalletIcon, RECOMMENDED_WALLETS } from '../../constants'
-import styles from '../../App.module.less'
+import styles from './index.module.less'
 
 interface WalletModalProps {
   open: boolean
