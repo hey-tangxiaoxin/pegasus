@@ -1,9 +1,9 @@
 import { Card, Select, Badge, Tooltip, Typography } from 'antd'
 import { GlobalOutlined, CheckCircleFilled } from '@ant-design/icons'
-import type { NetworkConfig } from '../types'
-import { SUPPORTED_NETWORKS, getGroupedNetworks } from '../constants'
-import { NetworkIcon } from './NetworkIcon'
-import styles from './NetworkSelector.module.less'
+import type { NetworkConfig } from '../../types'
+import { SUPPORTED_NETWORKS, getGroupedNetworks } from '../../constants'
+import { NetworkIcon } from '../NetworkIcon'
+import styles from './index.module.less'
 
 const { Text } = Typography
 

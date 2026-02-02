@@ -1,6 +1,6 @@
-import type { NetworkConfig } from '../types'
-import { NetworkIcons } from '../constants'
-import styles from './NetworkIcon.module.less'
+import type { NetworkConfig } from '../../types'
+import { NetworkIcons } from '../../constants'
+import styles from './index.module.less'
 
 interface NetworkIconProps {
   network: NetworkConfig
