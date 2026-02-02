@@ -1,4 +1,4 @@
-import { memo, useMemo, useCallback } from 'react'
+import { memo, useMemo } from 'react'
 import { Modal } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import type { WalletProvider } from '../../types'
@@ -19,14 +19,14 @@ const normalizeForCompare = (name: string) =>
 
 export const WalletModal = memo(({ open, onClose, availableWallets, connectedWalletId, onConnect }: WalletModalProps) => {
   // Memoize filtered recommended wallets to avoid recalculation on each render
-  const filteredRecommendedWallets = useMemo(() => 
+  const filteredRecommendedWallets = useMemo(() =>
     RECOMMENDED_WALLETS.filter(rw => {
       const recommendedKey = normalizeForCompare(rw.name)
       return !availableWallets.some(aw => {
         const detectedKey = normalizeForCompare(aw.name)
-        return detectedKey === recommendedKey || 
-               detectedKey.includes(recommendedKey) || 
-               recommendedKey.includes(detectedKey)
+        return detectedKey === recommendedKey ||
+          detectedKey.includes(recommendedKey) ||
+          recommendedKey.includes(detectedKey)
       })
     }), [availableWallets])
 
@@ -76,7 +76,7 @@ export const WalletModal = memo(({ open, onClose, availableWallets, connectedWal
               {availableWallets.map((wallet) => {
                 const isConnected = connectedWalletId === wallet.id
                 return (
-                  <div 
+                  <div
                     key={wallet.id}
                     className={`${styles.detectedWalletItem} ${isConnected ? styles.connectedWalletItem : ''}`}
                     onClick={() => onConnect(wallet)}
@@ -111,7 +111,7 @@ export const WalletModal = memo(({ open, onClose, availableWallets, connectedWal
         </div>
         <div className={styles.walletList}>
           {filteredRecommendedWallets.map((wallet) => (
-            <div 
+            <div
               key={wallet.name}
               className={styles.recommendedWalletItem}
               onClick={() => window.open(wallet.chromeStoreUrl, '_blank')}
@@ -134,7 +134,7 @@ export const WalletModal = memo(({ open, onClose, availableWallets, connectedWal
             </div>
           ))}
         </div>
-        
+
         {/* Footer Hint */}
         <div className={styles.footerHint}>
           <div className={styles.footerHintIcon}>🔒</div>
