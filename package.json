@@ -36,6 +36,11 @@
   "pnpm": {
     "overrides": {
       "vite": "npm:rolldown-vite@7.2.5"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "keccak",
+      "less",
+      "secp256k1"
+    ]
   }
 }
