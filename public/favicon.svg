@@ -1,11 +1,11 @@
 <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- m¹bÌo - Web3C  -->
+  <!-- mï¿½bï¿½o - Web3C  -->
   <path 
     d="M16 2L27.5 9V23L16 30L4.5 23V9L16 2Z" 
     fill="url(#horseGradient)" 
     opacity="0.15"
   />
-  <!-- l4nÓ -->
+  <!-- l4nï¿½ -->
   <path 
     d="M20 7C20 7 22 8 23 10C24 12 23 14 22 15L21 16C21 16 22 17 22 19C22 21 20 23 18 24L16 25L14 24C12 23 11 21 11 19L11 17C10 16 9 15 9 13C9 11 10 9 12 8L14 7L16 6L18 6.5L20 7Z"
     stroke="#a855f7" 
@@ -14,7 +14,7 @@
     stroke-linejoin="round"
     fill="none"
   />
-  <!-- lÛ -->
+  <!-- lï¿½ -->
   <path 
     d="M14 7C14 7 13 5 14 4C15 3 17 3 18 4"
     stroke="#a855f7" 
@@ -33,7 +33,7 @@
     stroke-linejoin="round"
     fill="none"
   />
-  <!-- þa‚¹ - Web3C  -->
+  <!-- ï¿½aï¿½ï¿½ - Web3C  -->
   <circle cx="7" cy="16" r="2" stroke="#a855f7" stroke-width="1" fill="none"/>
   <circle cx="25" cy="16" r="2" stroke="#a855f7" stroke-width="1" fill="none"/>
   <path d="M9 16H11" stroke="#a855f7" stroke-width="1"/>
