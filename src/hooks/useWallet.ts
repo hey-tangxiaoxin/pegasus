@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
 import { message } from 'antd'
 import type { WalletProvider, TokenInfo, AccountInfo, NetworkConfig } from '../types'
@@ -24,7 +24,7 @@ export interface UseWalletReturn {
   connectedWalletId: string
   ethersProvider: ethers.BrowserProvider | null
   setIsWalletModalOpen: (open: boolean) => void
-  handleConnectWallet: () => Promise<void>
+  handleConnectWallet: () => void
   connectToWallet: (wallet: WalletProvider) => Promise<void>
   disconnectWallet: () => void
   handleNetworkSwitch: (chainId: string) => Promise<void>
@@ -48,16 +48,75 @@ export function useWallet(): UseWalletReturn {
   const walletProviderRef = useRef<any>(null)
   const ethersProviderRef = useRef<ethers.BrowserProvider | null>(null)
 
-  const getCurrentNetwork = () => {
+  // Helper functions for wallet detection
+  const normalizeWalletName = useCallback((name: string) => {
+    const trimmedName = name.trim()
+    if (/^okx\s*wallet$/i.test(trimmedName.replace(/\s+/g, ' ')) || trimmedName.toLowerCase() === 'okx') {
+      return 'OKEx Wallet'
+    }
+    return trimmedName
+  }, [])
+
+  const getWalletKey = useCallback((name: string) =>
+    normalizeWalletName(name).toLowerCase().replace(/\s+/g, '-'), [normalizeWalletName])
+
+  // Detect available wallets - extracted as a reusable function
+  const detectWallets = useCallback(async (): Promise<WalletProvider[]> => {
+    const eip6963WalletList: Array<{ info: { name: string }; provider: any }> = []
+    const eventHandler = (e: Event) => {
+      const customEvent = e as unknown as CustomEvent<{ info: { name: string }; provider: any }>
+      eip6963WalletList.push(customEvent.detail)
+    }
+
+    window.addEventListener('eip6963:announceProvider', eventHandler as EventListener)
+    window.dispatchEvent(new Event('eip6963:requestProvider'))
+    await new Promise(resolve => setTimeout(resolve, 500))
+    window.removeEventListener('eip6963:announceProvider', eventHandler)
+
+    const legacyWalletList = detectAvailableWallets()
+    const walletByNameMap = new Map<string, WalletProvider>()
+
+    eip6963WalletList.forEach(wallet => {
+      const walletName = normalizeWalletName(wallet.info.name)
+      const walletKey = getWalletKey(walletName)
+      if (!walletByNameMap.has(walletKey)) {
+        walletByNameMap.set(walletKey, {
+          name: walletName,
+          provider: wallet.provider,
+          id: `eip6963-${walletKey}`
+        })
+      }
+    })
+
+    legacyWalletList.forEach(wallet => {
+      const walletName = normalizeWalletName(wallet.name)
+      const walletKey = getWalletKey(walletName)
+      if (!walletByNameMap.has(walletKey)) {
+        walletByNameMap.set(walletKey, { ...wallet, name: walletName })
+      }
+    })
+
+    return Array.from(walletByNameMap.values())
+  }, [normalizeWalletName, getWalletKey])
+
+  // Pre-detect wallets on mount
+  useEffect(() => {
+    detectWallets().then(wallets => {
+      setAvailableWallets(wallets)
+    })
+  }, [detectWallets])
+
+  // Memoize current network to avoid unnecessary recalculations
+  const currentNetwork = useMemo(() => {
     if (!currentChainId) return null
     return SUPPORTED_NETWORKS[currentChainId] || null
-  }
+  }, [currentChainId])
 
-  const currentNetwork = getCurrentNetwork()
-  const nativeSymbol = currentNetwork?.nativeCurrency.symbol || 'ETH'
+  const nativeSymbol = useMemo(() => 
+    currentNetwork?.nativeCurrency.symbol || 'ETH', [currentNetwork])
 
-  // Get token info
-  const getTokenInfo = async (
+  // Get token info - memoized to avoid recreating on each render
+  const getTokenInfo = useCallback(async (
     provider: ethers.BrowserProvider,
     tokenAddress: string,
     accountAddress: string
@@ -83,10 +142,10 @@ export function useWallet(): UseWalletReturn {
     } catch {
       return null
     }
-  }
+  }, [])
 
-  // Fetch account tokens
-  const fetchAccountTokens = async (
+  // Fetch account tokens - memoized
+  const fetchAccountTokens = useCallback(async (
     provider: ethers.BrowserProvider,
     accountAddress: string,
     chainId: string
@@ -96,7 +155,7 @@ export function useWallet(): UseWalletReturn {
       tokens.map(token => getTokenInfo(provider, token.address, accountAddress))
     )
     return tokenInfos.filter((token): token is TokenInfo => token !== null)
-  }
+  }, [getTokenInfo])
 
   // Fetch all accounts
   const fetchAllAccounts = useCallback(async (provider: ethers.BrowserProvider) => {
@@ -146,10 +205,10 @@ export function useWallet(): UseWalletReturn {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [fetchAccountTokens])
 
-  // Update current chain ID
-  const updateCurrentChainId = async (provider: ethers.BrowserProvider) => {
+  // Update current chain ID - memoized
+  const updateCurrentChainId = useCallback(async (provider: ethers.BrowserProvider) => {
     try {
       const network = await provider.getNetwork()
       const chainIdHex = `0x${network.chainId.toString(16)}`
@@ -157,10 +216,10 @@ export function useWallet(): UseWalletReturn {
     } catch (error) {
       console.error('Failed to get chain ID:', error)
     }
-  }
+  }, [])
 
-  // Update wallet info
-  const updateWalletInfo = async (provider: ethers.BrowserProvider, account: string) => {
+  // Update wallet info - memoized
+  const updateWalletInfo = useCallback(async (provider: ethers.BrowserProvider, account: string) => {
     if (!provider) return
     try {
       const [balance, signer] = await Promise.all([
@@ -173,7 +232,7 @@ export function useWallet(): UseWalletReturn {
     } catch (error: any) {
       message.error(`Failed to update wallet info: ${error.message || 'Unknown error'}`)
     }
-  }
+  }, [updateCurrentChainId, fetchAllAccounts])
 
   // Disconnect wallet
   const disconnectWallet = useCallback(() => {
@@ -186,7 +245,7 @@ export function useWallet(): UseWalletReturn {
     ethersProviderRef.current = null
   }, [])
 
-  // Setup listeners
+  // Setup listeners - memoized with proper dependencies
   const setupListeners = useCallback((provider: WalletProvider['provider']) => {
     if (provider?.removeAllListeners) {
       provider.removeAllListeners()
@@ -225,68 +284,28 @@ export function useWallet(): UseWalletReturn {
         }
       })
     }
-  }, [disconnectWallet])
+  }, [disconnectWallet, updateWalletInfo])
 
-  // Handle connect wallet - detect available wallets
-  const handleConnectWallet = async () => {
-    const eip6963WalletList: Array<{ info: { name: string }; provider: any }> = []
-    const eventHandler = (e: Event) => {
-      const customEvent = e as unknown as CustomEvent<{ info: { name: string }; provider: any }>
-      eip6963WalletList.push(customEvent.detail)
-    }
-
-    window.addEventListener('eip6963:announceProvider', eventHandler as EventListener)
-    window.dispatchEvent(new Event('eip6963:requestProvider'))
-    await new Promise(resolve => setTimeout(resolve, 500))
-    window.removeEventListener('eip6963:announceProvider', eventHandler)
-
-    const legacyWalletList = detectAvailableWallets()
-    const walletByNameMap = new Map<string, WalletProvider>()
-
-    const normalizeWalletName = (name: string) => {
-      const trimmedName = name.trim()
-      if (/^okx\s*wallet$/i.test(trimmedName.replace(/\s+/g, ' ')) || trimmedName.toLowerCase() === 'okx') {
-        return 'OKEx Wallet'
-      }
-      return trimmedName
-    }
-
-    const getWalletKey = (name: string) =>
-      normalizeWalletName(name).toLowerCase().replace(/\s+/g, '-')
-
-    eip6963WalletList.forEach(wallet => {
-      const walletName = normalizeWalletName(wallet.info.name)
-      const walletKey = getWalletKey(walletName)
-      if (!walletByNameMap.has(walletKey)) {
-        walletByNameMap.set(walletKey, {
-          name: walletName,
-          provider: wallet.provider,
-          id: `eip6963-${walletKey}`
-        })
-      }
-    })
-
-    legacyWalletList.forEach(wallet => {
-      const walletName = normalizeWalletName(wallet.name)
-      const walletKey = getWalletKey(walletName)
-      if (!walletByNameMap.has(walletKey)) {
-        walletByNameMap.set(walletKey, { ...wallet, name: walletName })
-      }
-    })
-
-    const detectedWallets = Array.from(walletByNameMap.values())
-
-    if (detectedWallets.length === 0) {
+  // Handle connect wallet - open modal immediately with pre-detected wallets
+  const handleConnectWallet = useCallback(() => {
+    if (availableWallets.length === 0) {
       message.error('No wallet detected! Please install a wallet extension like MetaMask.')
       return
     }
 
-    setAvailableWallets(detectedWallets)
+    // Open modal immediately with pre-detected wallets
     setIsWalletModalOpen(true)
-  }
+    
+    // Refresh wallet list in background to catch any newly installed wallets
+    detectWallets().then(freshWallets => {
+      if (freshWallets.length > availableWallets.length) {
+        setAvailableWallets(freshWallets)
+      }
+    })
+  }, [availableWallets, detectWallets])
 
-  // Connect to specific wallet
-  const connectToWallet = async (wallet: WalletProvider) => {
+  // Connect to specific wallet - memoized
+  const connectToWallet = useCallback(async (wallet: WalletProvider) => {
     try {
       setIsWalletModalOpen(false)
       const walletProvider = wallet.provider
@@ -337,10 +356,10 @@ export function useWallet(): UseWalletReturn {
     } catch (error: any) {
       message.error(`Failed to connect: ${error.message || 'Unknown error'}`)
     }
-  }
+  }, [updateWalletInfo, setupListeners, walletInfo.account])
 
-  // Handle network switch
-  const handleNetworkSwitch = async (chainId: string) => {
+  // Handle network switch - memoized
+  const handleNetworkSwitch = useCallback(async (chainId: string) => {
     if (!walletProviderRef.current) {
       message.error('Please connect your wallet first')
       return
@@ -387,7 +406,7 @@ export function useWallet(): UseWalletReturn {
     } finally {
       setIsNetworkSwitching(false)
     }
-  }
+  }, [currentChainId])
 
   // Cleanup on unmount
   useEffect(() => () => walletProviderRef.current?.removeAllListeners?.(), [])

@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react'
 import { Tooltip, message } from 'antd'
 import { CopyOutlined } from '@ant-design/icons'
 import type { AccountInfo, TokenInfo } from '../../types'
@@ -11,7 +12,17 @@ interface AccountCardProps {
   onTokenClick?: (token: TokenInfo) => void
 }
 
-export const AccountCard = ({ account, nativeSymbol, onTokenClick }: AccountCardProps) => {
+export const AccountCard = memo(({ account, nativeSymbol, onTokenClick }: AccountCardProps) => {
+  // Memoize copy address handler
+  const handleCopyAddress = useCallback(() => {
+    copyToClipboard(account.address)
+  }, [account.address])
+
+  // Memoize token click handler
+  const handleTokenClick = useCallback((token: TokenInfo) => {
+    onTokenClick?.(token)
+    message.success(`Token address filled: ${token.symbol}`)
+  }, [onTokenClick])
   return (
     <div className={styles.accountCard}>
       <div className={styles.accountHeader}>
@@ -24,7 +35,7 @@ export const AccountCard = ({ account, nativeSymbol, onTokenClick }: AccountCard
             <Tooltip title="Click to copy">
               <span 
                 className={styles.accountAddress}
-                onClick={() => copyToClipboard(account.address)}
+                onClick={handleCopyAddress}
               >
                 {formatAddress(account.address)}
                 <CopyOutlined className={styles.iconMarginLeft} style={{ fontSize: 12 }} />
@@ -48,10 +59,7 @@ export const AccountCard = ({ account, nativeSymbol, onTokenClick }: AccountCard
               <div 
                 key={token.address} 
                 className={styles.tokenItem}
-                onClick={() => {
-                  onTokenClick?.(token)
-                  message.success(`Token address filled: ${token.symbol}`)
-                }}
+                onClick={() => handleTokenClick(token)}
               >
                 <div className={styles.tokenIcon}>
                   {token.symbol.slice(0, 2)}
@@ -72,4 +80,4 @@ export const AccountCard = ({ account, nativeSymbol, onTokenClick }: AccountCard
       </div>
     </div>
   )
-}
+})

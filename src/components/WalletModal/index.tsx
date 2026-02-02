@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react'
 import { Modal } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import type { WalletProvider } from '../../types'
@@ -16,16 +17,26 @@ interface WalletModalProps {
 const normalizeForCompare = (name: string) =>
   name.toLowerCase().replace(/\s+wallet$/i, '').replace(/\s+/g, '').replace(/ex$/i, '')
 
-export const WalletModal = ({ open, onClose, availableWallets, connectedWalletId, onConnect }: WalletModalProps) => {
-  const filteredRecommendedWallets = RECOMMENDED_WALLETS.filter(rw => {
-    const recommendedKey = normalizeForCompare(rw.name)
-    return !availableWallets.some(aw => {
-      const detectedKey = normalizeForCompare(aw.name)
-      return detectedKey === recommendedKey || 
-             detectedKey.includes(recommendedKey) || 
-             recommendedKey.includes(detectedKey)
-    })
-  })
+export const WalletModal = memo(({ open, onClose, availableWallets, connectedWalletId, onConnect }: WalletModalProps) => {
+  // Memoize filtered recommended wallets to avoid recalculation on each render
+  const filteredRecommendedWallets = useMemo(() => 
+    RECOMMENDED_WALLETS.filter(rw => {
+      const recommendedKey = normalizeForCompare(rw.name)
+      return !availableWallets.some(aw => {
+        const detectedKey = normalizeForCompare(aw.name)
+        return detectedKey === recommendedKey || 
+               detectedKey.includes(recommendedKey) || 
+               recommendedKey.includes(detectedKey)
+      })
+    }), [availableWallets])
+
+  // Memoize modal styles to prevent object recreation
+  const modalStyles = useMemo(() => ({
+    mask: {
+      backdropFilter: 'blur(12px)',
+      background: 'rgba(0, 0, 0, 0.6)',
+    },
+  }), [])
 
   return (
     <Modal
@@ -36,12 +47,7 @@ export const WalletModal = ({ open, onClose, availableWallets, connectedWalletId
       centered
       closable={false}
       title={null}
-      styles={{
-        mask: {
-          backdropFilter: 'blur(12px)',
-          background: 'rgba(0, 0, 0, 0.6)',
-        },
-      }}
+      styles={modalStyles}
       className="wallet-modal"
     >
       {/* Modal Header */}
@@ -137,4 +143,4 @@ export const WalletModal = ({ open, onClose, availableWallets, connectedWalletId
       </div>
     </Modal>
   )
-}
+})

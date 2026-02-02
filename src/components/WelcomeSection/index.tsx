@@ -9,7 +9,7 @@ export const WelcomeSection = ({ onConnect }: WelcomeSectionProps) => {
   return (
     <div className={styles.welcomeSection}>
       <div className={styles.welcomeIcon}>
-        <WalletOutlined />
+        <WalletOutlined style={{ fontSize: '48px' }} />
       </div>
       <h2>Welcome to Pegasus</h2>
       <div className={styles.typewriterWrapper}>

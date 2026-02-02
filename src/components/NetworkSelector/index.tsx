@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import { Card, Select, Badge, Tooltip, Typography } from 'antd'
 import { GlobalOutlined, CheckCircleFilled } from '@ant-design/icons'
 import type { NetworkConfig } from '../../types'
@@ -14,6 +15,10 @@ interface NetworkSelectorProps {
   onNetworkSwitch: (chainId: string) => void
 }
 
+// Testnet badge style - extracted as constant to avoid recreation
+const TESTNET_BADGE_STYLE = { backgroundColor: '#f5f5f5', color: '#8c8c8c', fontSize: '10px' }
+const TEST_BADGE_STYLE = { backgroundColor: '#fff7e6', color: '#fa8c16', fontSize: '10px', marginLeft: '4px' }
+
 const renderNetworkOption = (
   _chainId: string, 
   network: NetworkConfig, 
@@ -27,7 +32,7 @@ const renderNetworkOption = (
         {network.isTestnet && (
           <Badge 
             count="Testnet" 
-            style={{ backgroundColor: '#f5f5f5', color: '#8c8c8c', fontSize: '10px' }}
+            style={TESTNET_BADGE_STYLE}
           />
         )}
         {isSelected && <CheckCircleFilled className={styles.selectedIcon} />}
@@ -39,14 +44,21 @@ const renderNetworkOption = (
   </div>
 )
 
-export const NetworkSelector = ({
+// Memoize grouped networks since they're static
+const groupedNetworks = getGroupedNetworks()
+
+export const NetworkSelector = memo(({
   currentChainId,
   isNetworkSwitching,
   isDisabled,
   onNetworkSwitch,
 }: NetworkSelectorProps) => {
-  const currentNetwork = currentChainId ? SUPPORTED_NETWORKS[currentChainId] : null
-  const { mainnetList, testnetList } = getGroupedNetworks()
+  // Memoize current network lookup
+  const currentNetwork = useMemo(() => 
+    currentChainId ? SUPPORTED_NETWORKS[currentChainId] : null, [currentChainId])
+  
+  // Use pre-computed grouped networks
+  const { mainnetList, testnetList } = groupedNetworks
   
   const renderSelectedLabel = () => {
     if (!currentNetwork) {
@@ -64,7 +76,7 @@ export const NetworkSelector = ({
         {currentNetwork.isTestnet && (
           <Badge 
             count="Test" 
-            style={{ backgroundColor: '#fff7e6', color: '#fa8c16', fontSize: '10px', marginLeft: '4px' }}
+            style={TEST_BADGE_STYLE}
           />
         )}
       </div>
@@ -131,4 +143,4 @@ export const NetworkSelector = ({
       </div>
     </Card>
   )
-}
+})

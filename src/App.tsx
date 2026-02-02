@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { Form, Spin } from 'antd'
 import './styles/global.less'
 import styles from './App.module.less'
@@ -37,17 +38,30 @@ function App() {
     fetchAllAccounts,
   } = useWallet()
 
+  // Memoize onSuccess callback to avoid unnecessary re-renders
+  const handleTransactionSuccess = useCallback(() => {
+    if (ethersProvider) {
+      fetchAllAccounts(ethersProvider)
+    }
+  }, [ethersProvider, fetchAllAccounts])
+
   const { handleSendTransaction } = useTransaction({
     account: walletInfo.account,
     signer: walletInfo.signer,
     ethersProvider,
     form,
-    onSuccess: () => {
-      if (ethersProvider) {
-        fetchAllAccounts(ethersProvider)
-      }
-    },
+    onSuccess: handleTransactionSuccess,
   })
+
+  // Memoize token click handler factory
+  const handleTokenClick = useCallback((token: { address: string }) => {
+    form.setFieldsValue({ tokenAddress: token.address })
+  }, [form])
+
+  // Memoize modal close handler
+  const handleCloseModal = useCallback(() => {
+    setIsWalletModalOpen(false)
+  }, [setIsWalletModalOpen])
 
   return (
     <div className={styles.appContainer}>
@@ -75,9 +89,7 @@ function App() {
                   key={account.address}
                   account={account}
                   nativeSymbol={nativeSymbol}
-                  onTokenClick={(token) => {
-                    form.setFieldsValue({ tokenAddress: token.address })
-                  }}
+                  onTokenClick={handleTokenClick}
                 />
               ))}
             </Spin>
@@ -89,7 +101,7 @@ function App() {
 
       <WalletModal
         open={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
+        onClose={handleCloseModal}
         availableWallets={availableWallets}
         connectedWalletId={connectedWalletId}
         onConnect={connectToWallet}
