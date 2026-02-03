@@ -1,9 +1,17 @@
-import { memo, useState } from 'react'
-import { Modal, Form, Select, Button, InputNumber } from 'antd'
+import { memo, useState, type ChangeEvent } from 'react'
+import { Modal, Form, Button, Input, Dropdown } from 'antd'
 import { SwapOutlined, DownOutlined, CloseOutlined } from '@ant-design/icons'
 import type { AccountInfo } from '../../types'
 import { formatBalance } from '../../utils/format'
 import styles from './index.module.less'
+
+// Only allow numeric input (digits and one decimal point)
+const handleNumericInput = (e: ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value
+  if (value && !/^\d*\.?\d*$/.test(value)) {
+    e.target.value = value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
+  }
+}
 
 interface SwapModalProps {
   open: boolean
@@ -41,7 +49,31 @@ export const SwapModal = memo(({ open, onClose, account, nativeSymbol }: SwapMod
     form.setFieldsValue({ fromToken: toToken, toToken: fromToken })
   }
 
-  const tokenOptions = swapTokens.map(t => ({ value: t.symbol, label: <span>{t.icon} {t.symbol}</span> }))
+  const fromTokenMenu = {
+    items: swapTokens.map(t => ({
+      key: t.symbol,
+      label: `${t.icon} ${t.symbol}`,
+      onClick: () => {
+        setFromToken(t.symbol)
+        form.setFieldValue('fromToken', t.symbol)
+      },
+    })),
+  }
+  const toTokenMenu = {
+    items: swapTokens.map(t => ({
+      key: t.symbol,
+      label: `${t.icon} ${t.symbol}`,
+      onClick: () => {
+        setToToken(t.symbol)
+        form.setFieldValue('toToken', t.symbol)
+      },
+    })),
+  }
+  const tokenSuffix = (token: string) => (
+    <Dropdown menu={token === fromToken ? fromTokenMenu : toTokenMenu} trigger={['click']} className={styles.tokenSuffixDropdown}>
+      <span className={styles.tokenSuffixTrigger}>{token} <DownOutlined /></span>
+    </Dropdown>
+  )
 
   return (
     <Modal
@@ -54,7 +86,7 @@ export const SwapModal = memo(({ open, onClose, account, nativeSymbol }: SwapMod
       title={null}
       styles={{ mask: { backdropFilter: 'blur(12px)', background: 'rgba(0, 0, 0, 0.6)' } }}
       className={styles.swapModal}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className={styles.modalHeader}>
         <div className={styles.modalHeaderContent}>
@@ -74,17 +106,17 @@ export const SwapModal = memo(({ open, onClose, account, nativeSymbol }: SwapMod
           <div className={styles.tokenBox}>
             <div className={styles.tokenBoxHeader}>
               <span className={styles.tokenBoxLabel}>Pay</span>
-              <span className={styles.tokenBalance}>Balance: {formatBalance(account?.nativeBalance || '0')} {fromToken}</span>
+              <span className={styles.tokenBalance}>
+                Balance: {formatBalance(account?.nativeBalance || '0')} {fromToken}
+                <button type="button" className={styles.maxBtn} onClick={() => form.setFieldValue('fromAmount', account?.nativeBalance)}>MAX</button>
+              </span>
             </div>
             <div className={styles.tokenInputRow}>
+              <Form.Item name="fromToken" noStyle><input type="hidden" /></Form.Item>
               <Form.Item name="fromAmount" noStyle rules={[{ required: true, message: 'Please enter amount' }]}>
-                <InputNumber placeholder="0.0" variant="borderless" className={styles.tokenInput} min={0} stringMode />
-              </Form.Item>
-              <Form.Item name="fromToken" noStyle>
-                <Select className={styles.tokenSelect} value={fromToken} onChange={setFromToken} suffixIcon={<DownOutlined />} options={tokenOptions} />
+                <Input placeholder="0.0" variant="borderless" className={styles.tokenInput} onChange={handleNumericInput} suffix={tokenSuffix(fromToken)} />
               </Form.Item>
             </div>
-            <button type="button" className={styles.maxBtn} onClick={() => form.setFieldValue('fromAmount', account?.nativeBalance)}>MAX</button>
           </div>
 
           <div className={styles.swapBtnWrapper}>
@@ -96,11 +128,9 @@ export const SwapModal = memo(({ open, onClose, account, nativeSymbol }: SwapMod
               <span className={styles.tokenBoxLabel}>Receive</span>
             </div>
             <div className={styles.tokenInputRow}>
+              <Form.Item name="toToken" noStyle><input type="hidden" /></Form.Item>
               <Form.Item name="toAmount" noStyle>
-                <InputNumber placeholder="0.0" variant="borderless" className={styles.tokenInput} disabled />
-              </Form.Item>
-              <Form.Item name="toToken" noStyle>
-                <Select className={styles.tokenSelect} value={toToken} onChange={setToToken} suffixIcon={<DownOutlined />} options={tokenOptions} />
+                <Input placeholder="0.0" variant="borderless" className={styles.tokenInput} disabled suffix={tokenSuffix(toToken)} />
               </Form.Item>
             </div>
           </div>

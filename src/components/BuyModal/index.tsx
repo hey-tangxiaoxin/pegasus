@@ -1,7 +1,15 @@
-import { memo, useState } from 'react'
-import { Modal, Form, Select, Button, InputNumber, Typography } from 'antd'
+import { memo, useState, type ChangeEvent } from 'react'
+import { Modal, Form, Select, Button, Input, Typography } from 'antd'
 import { DollarOutlined, CreditCardOutlined, CloseOutlined } from '@ant-design/icons'
 import styles from './index.module.less'
+
+// Only allow integer input (USD amount)
+const handleIntegerInput = (e: ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value
+  if (value && !/^\d*$/.test(value)) {
+    e.target.value = value.replace(/\D/g, '')
+  }
+}
 
 const { Text } = Typography
 
@@ -13,7 +21,7 @@ interface BuyModalProps {
 
 const ApplePayIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: 'middle' }}>
-    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
   </svg>
 )
 
@@ -41,7 +49,7 @@ export const BuyModal = memo(({ open, onClose, nativeSymbol }: BuyModalProps) =>
 
   const handleAmountSelect = (amount: number) => {
     setSelectedAmount(amount)
-    form.setFieldValue('amount', amount)
+    form.setFieldValue('amount', String(amount))
   }
 
   return (
@@ -55,7 +63,7 @@ export const BuyModal = memo(({ open, onClose, nativeSymbol }: BuyModalProps) =>
       title={null}
       styles={{ mask: { backdropFilter: 'blur(12px)', background: 'rgba(0, 0, 0, 0.6)' } }}
       className={styles.buyModal}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className={styles.modalHeader}>
         <div className={styles.modalHeaderContent}>
@@ -77,14 +85,7 @@ export const BuyModal = memo(({ open, onClose, nativeSymbol }: BuyModalProps) =>
         </div>
 
         <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ paymentMethod: 'card' }}>
-          <div className={styles.formItem}>
-            <label className={styles.formLabel}>Amount (USD)</label>
-            <Form.Item name="amount" rules={[{ required: true, message: 'Please enter amount' }]} noStyle>
-              <InputNumber size="large" placeholder="Enter amount" prefix="$" className={styles.inputNumber} min={10} max={100000} />
-            </Form.Item>
-          </div>
-
-          <div className={styles.quickAmounts}>
+          <Form.Item label={<label className={styles.formLabel}>Amount (USD)</label>} name="amount" rules={[{ required: true, message: 'Please enter amount' }]} extra={<div className={styles.quickAmounts}>
             {popularAmounts.map((amount) => (
               <button
                 key={amount}
@@ -95,19 +96,18 @@ export const BuyModal = memo(({ open, onClose, nativeSymbol }: BuyModalProps) =>
                 ${amount}
               </button>
             ))}
-          </div>
+          </div>}>
+            <Input size='large' placeholder="Enter amount" prefix="$" onChange={handleIntegerInput} />
+          </Form.Item>
 
-          <div className={styles.formItem}>
-            <label className={styles.formLabel}>Payment Method</label>
-            <Form.Item name="paymentMethod" rules={[{ required: true }]} noStyle>
-              <Select size="large" className={styles.select} options={paymentMethods.map(m => ({ value: m.value, label: <span>{m.icon} {m.label}</span> }))} />
-            </Form.Item>
-          </div>
+          <Form.Item label={<label className={styles.formLabel}>Payment Method</label>} name="paymentMethod" rules={[{ required: true }]}>
+            <Select size="large" style={{ width: '100%' }} options={paymentMethods.map(m => ({ value: m.value, label: <span>{m.icon} {m.label}</span> }))} />
+          </Form.Item>
 
           <div className={styles.estimateBox}>
             <div className={styles.estimateRow}>
               <span className={styles.estimateLabel}>You will receive</span>
-              <span className={styles.estimateValue}>~ 0.04 {nativeSymbol}</span>
+              <span className={`${styles.estimateValue} ${styles.positive}`}>~ 0.04 {nativeSymbol}</span>
             </div>
             <div className={styles.estimateRow}>
               <span className={styles.estimateLabel}>Fee</span>

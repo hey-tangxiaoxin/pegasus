@@ -1,9 +1,17 @@
-import { memo, useState } from 'react'
-import { Modal, Form, Input, Select, Button, InputNumber } from 'antd'
+import { memo, useState, type ChangeEvent } from 'react'
+import { Modal, Form, Input, Select, Button } from 'antd'
 import { SendOutlined, DownOutlined, UserOutlined, CloseOutlined } from '@ant-design/icons'
 import type { AccountInfo } from '../../types'
 import { formatBalance } from '../../utils/format'
 import styles from './index.module.less'
+
+// Only allow numeric input (digits and one decimal point)
+const handleNumericInput = (e: ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value
+  if (value && !/^\d*\.?\d*$/.test(value)) {
+    e.target.value = value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
+  }
+}
 
 interface SendModalProps {
   open: boolean
@@ -47,7 +55,7 @@ export const SendModal = memo(({ open, onClose, account, nativeSymbol, onSend }:
       title={null}
       styles={{ mask: { backdropFilter: 'blur(12px)', background: 'rgba(0, 0, 0, 0.6)' } }}
       className={styles.sendModal}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className={styles.modalHeader}>
         <div className={styles.modalHeaderContent}>
@@ -64,41 +72,33 @@ export const SendModal = memo(({ open, onClose, account, nativeSymbol, onSend }:
 
       <div className={styles.modalContent}>
         <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ token: 'native' }}>
-          <div className={styles.formItem}>
-            <label className={styles.formLabel}>Select Token</label>
-            <Form.Item name="token" rules={[{ required: true, message: 'Please select a token' }]} noStyle>
-              <Select size="large" value={selectedToken} onChange={setSelectedToken} suffixIcon={<DownOutlined />} className={styles.tokenSelect}>
-                {tokenOptions.map(token => (
-                  <Select.Option key={token.value} value={token.value}>
-                    <div className={styles.tokenOption}>
-                      <span>{token.label}</span>
-                      <span className={styles.tokenBalance}>{formatBalance(token.balance)}</span>
-                    </div>
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-
-          <div className={styles.formItem}>
-            <label className={styles.formLabel}>Amount</label>
-            <Form.Item name="amount" rules={[{ required: true, message: 'Please enter amount' }]} noStyle>
-              <InputNumber size="large" placeholder="0.0" className={styles.amountInput} min={0} stringMode addonAfter={currentToken?.symbol} />
-            </Form.Item>
-            <div className={styles.balanceInfo}>
-              <span className={styles.balanceLabel}>Available: </span>
-              <span className={styles.balanceValue} onClick={() => form.setFieldValue('amount', currentToken?.balance)}>
-                {formatBalance(currentToken?.balance || '0')} {currentToken?.symbol}
+          <Form.Item label={<label className={styles.formLabel}>Select Token</label>} name="token" rules={[{ required: true, message: 'Please select a token' }]}>
+            <Select size="large" value={selectedToken} onChange={setSelectedToken} options={tokenOptions.map(token => ({ value: token.value, label: token.label }))} suffixIcon={<DownOutlined />} className={styles.tokenSelect} />
+          </Form.Item>
+          <Form.Item
+            label={<label className={styles.formLabel}>Amount</label>}
+            name="amount"
+            rules={[{ required: true, message: 'Please enter amount' }]}
+            extra={
+              <span className={styles.balanceExtra}>
+                Available {formatBalance(currentToken?.balance || '0')} {currentToken?.symbol}
+                {' · '}
+                <button type="button" className={styles.maxLink} onClick={() => form.setFieldValue('amount', currentToken?.balance)}>MAX</button>
               </span>
-            </div>
-          </div>
+            }
+            className={styles.formItem}
+          >
+            <Input size='large' placeholder="0.0" onChange={handleNumericInput} addonAfter={currentToken?.symbol} className={styles.amountInput} />
+          </Form.Item>
 
-          <div className={styles.formItem}>
-            <label className={styles.formLabel}>Recipient Address</label>
-            <Form.Item name="toAddress" rules={[{ required: true, message: 'Please enter recipient address' }, { pattern: /^0x[a-fA-F0-9]{40}$/, message: 'Invalid address format' }]} noStyle>
-              <Input size="large" placeholder="0x..." prefix={<UserOutlined className={styles.inputPrefix} />} className={styles.addressInput} />
-            </Form.Item>
-          </div>
+          <Form.Item
+            label={<label className={styles.formLabel}>Recipient Address</label>}
+            name="toAddress"
+            rules={[{ required: true, message: 'Please enter recipient address' }, { pattern: /^0x[a-fA-F0-9]{40}$/, message: 'Invalid address format' }]}
+            className={styles.formItem}
+          >
+            <Input size='large' placeholder="0x..." className={styles.addressInput} />
+          </Form.Item>
 
           <div className={styles.feeBox}>
             <div className={styles.feeRow}>

@@ -118,7 +118,6 @@
     background: rgba(139, 92, 246, 0.2);
     border-color: rgba(139, 92, 246, 0.5);
     box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-    transform: rotate(90deg);
   }
 
   &:active, &:focus, &:focus-visible {
@@ -131,46 +130,42 @@
   padding: 0 28px 28px;
 }
 
+// Wallet-style form group: label row + input row, subtle border
 .tokenBox {
   position: relative;
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.6) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 16px;
-  padding: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease;
 
   &:hover, &:focus-within {
-    border-color: rgba(139, 92, 246, 0.45);
-    box-shadow: 
-      0 0 30px rgba(139, 92, 246, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+  &:focus-within {
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
   }
 }
 
 .tokenBoxHeader {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .tokenBoxLabel {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: @color-text-secondary;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .tokenBalance {
+  display: flex;
+  align-items: center;
   font-size: 12px;
-  color: @color-text-secondary;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  
-  &:hover {
-    color: @color-swap-light;
-  }
+  color: @color-text-muted;
 }
 
 .tokenInputRow {
@@ -181,66 +176,55 @@
 
 .tokenInput {
   flex: 1;
-  
-  :global(.ant-input-number-input) {
+  width: 100%;
+
+  :global(.ant-input) {
     padding: 0;
-    color: #fff !important;
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    background: transparent !important;
+    border: none !important;
+    color: @color-text !important;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    box-shadow: none !important;
+    &:focus { box-shadow: none !important; }
+  }
+
+  :global(.ant-input-suffix) {
+    margin-left: 8px;
   }
 }
 
-.tokenSelect {
-  width: 140px;
+.tokenSuffixDropdown {
+  cursor: pointer;
+}
 
-  :global(.ant-select-selector) {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
-    border: 1px solid rgba(139, 92, 246, 0.35) !important;
-    border-radius: 12px !important;
-    height: 44px !important;
-    transition: all 0.25s ease !important;
-    
-    &:hover {
-      border-color: rgba(139, 92, 246, 0.6) !important;
-      box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
-    }
-  }
-
-  :global(.ant-select-selection-item) {
-    line-height: 44px !important;
-    font-weight: 700;
-    color: #fff !important;
-  }
+.tokenSuffixTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 10px;
+  font-weight: 600;
+  color: @color-text;
+  font-size: 14px;
+  &:hover { border-color: rgba(139, 92, 246, 0.5); }
 }
 
 .maxBtn {
-  position: absolute;
-  right: 160px;
-  bottom: 24px;
-  padding: 6px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.15) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 6px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
   color: @color-swap-light;
   cursor: pointer;
-  transition: all 0.25s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-
-  &:hover {
-    background: rgba(139, 92, 246, 0.35);
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.25);
-    transform: scale(1.05);
-  }
-
-  &:active, &:focus, &:focus-visible {
-    transform: scale(0.98);
-    outline: none;
-  }
+  &:hover { text-decoration: underline; }
+  &:focus, &:focus-visible { outline: none; }
 }
 
 .swapBtnWrapper {
@@ -274,6 +258,7 @@
   }
 }
 
+// Wallet-style info block
 .rateBox {
   background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.6) 100%);
   border: 1px solid rgba(139, 92, 246, 0.15);
