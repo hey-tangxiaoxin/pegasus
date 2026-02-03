@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react'
-import { Modal } from 'antd'
+import { Modal, Spin } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import type { WalletProvider } from '../../types'
 import { getWalletIcon, RECOMMENDED_WALLETS } from '../../constants'
@@ -10,6 +10,7 @@ interface WalletModalProps {
   onClose: () => void
   availableWallets: WalletProvider[]
   connectedWalletId?: string
+  connectingWalletId?: string
   onConnect: (wallet: WalletProvider) => void
 }
 
@@ -17,7 +18,7 @@ interface WalletModalProps {
 const normalizeForCompare = (name: string) =>
   name.toLowerCase().replace(/\s+wallet$/i, '').replace(/\s+/g, '').replace(/ex$/i, '')
 
-export const WalletModal = memo(({ open, onClose, availableWallets, connectedWalletId, onConnect }: WalletModalProps) => {
+export const WalletModal = memo(({ open, onClose, availableWallets, connectedWalletId, connectingWalletId, onConnect }: WalletModalProps) => {
   // Memoize filtered recommended wallets to avoid recalculation on each render
   const filteredRecommendedWallets = useMemo(() =>
     RECOMMENDED_WALLETS.filter(rw => {
@@ -75,11 +76,12 @@ export const WalletModal = memo(({ open, onClose, availableWallets, connectedWal
             <div className={`${styles.walletList} ${styles.detectedWalletList}`}>
               {availableWallets.map((wallet) => {
                 const isConnected = connectedWalletId === wallet.id
+                const isConnecting = connectingWalletId === wallet.id
                 return (
                   <div
                     key={wallet.id}
-                    className={`${styles.detectedWalletItem} ${isConnected ? styles.connectedWalletItem : ''}`}
-                    onClick={() => onConnect(wallet)}
+                    className={`${styles.detectedWalletItem} ${isConnected ? styles.connectedWalletItem : ''} ${isConnecting ? styles.connectingWalletItem : ''}`}
+                    onClick={() => !isConnecting && onConnect(wallet)}
                   >
                     <div className={styles.walletIconWrapper}>
                       {getWalletIcon(wallet.name)}
@@ -87,10 +89,12 @@ export const WalletModal = memo(({ open, onClose, availableWallets, connectedWal
                     <div className={styles.walletInfoWrapper}>
                       <div className={styles.detectedWalletName}>{wallet.name}</div>
                       <div className={styles.walletStatus}>
-                        {isConnected ? 'Connected' : 'Ready to connect'}
+                        {isConnecting ? 'Connecting...' : isConnected ? 'Connected' : 'Ready to connect'}
                       </div>
                     </div>
-                    {isConnected ? (
+                    {isConnecting ? (
+                      <Spin size="small" className={styles.connectingSpinner} />
+                    ) : isConnected ? (
                       <div className={styles.connectedBadge}>Connected</div>
                     ) : (
                       <div className={styles.connectBtnSmall}>Connect</div>

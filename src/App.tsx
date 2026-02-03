@@ -42,6 +42,7 @@ function App() {
     isNetworkSwitching,
     nativeSymbol,
     connectedWalletId,
+    connectingWalletId,
     ethersProvider,
     setIsWalletModalOpen,
     handleConnectWallet,
@@ -154,6 +155,7 @@ function App() {
         onClose={handleCloseModal}
         availableWallets={availableWallets}
         connectedWalletId={connectedWalletId}
+        connectingWalletId={connectingWalletId}
         onConnect={connectToWallet}
       />
 

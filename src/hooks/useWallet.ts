@@ -22,6 +22,7 @@ export interface UseWalletReturn {
   currentNetwork: NetworkConfig | null
   nativeSymbol: string
   connectedWalletId: string
+  connectingWalletId: string
   ethersProvider: ethers.BrowserProvider | null
   setIsWalletModalOpen: (open: boolean) => void
   handleConnectWallet: () => void
@@ -44,6 +45,7 @@ export function useWallet(): UseWalletReturn {
   const [currentChainId, setCurrentChainId] = useState<string>('')
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false)
   const [connectedWalletId, setConnectedWalletId] = useState<string>('')
+  const [connectingWalletId, setConnectingWalletId] = useState<string>('')
 
   const walletProviderRef = useRef<any>(null)
   const ethersProviderRef = useRef<ethers.BrowserProvider | null>(null)
@@ -306,12 +308,13 @@ export function useWallet(): UseWalletReturn {
 
   // Connect to specific wallet - memoized
   const connectToWallet = useCallback(async (wallet: WalletProvider) => {
+    setConnectingWalletId(wallet.id)
     try {
-      setIsWalletModalOpen(false)
       const walletProvider = wallet.provider
 
       if (!walletProvider || typeof walletProvider.request !== 'function') {
         message.error('Invalid wallet provider')
+        setConnectingWalletId('')
         return
       }
 
@@ -321,10 +324,12 @@ export function useWallet(): UseWalletReturn {
         const detectedName = getWalletName(walletProvider)
         if (detectedName !== wallet.name) {
           message.error(`Wallet mismatch: Selected ${wallet.name} but detected ${detectedName}. Please try again.`)
+          setConnectingWalletId('')
           return
         }
         if (wallet.name === 'MetaMask' && walletProvider.isOKExWallet === true) {
           message.error('Selected MetaMask but this provider is OKX. Please choose MetaMask from the list again.')
+          setConnectingWalletId('')
           return
         }
       }
@@ -344,19 +349,43 @@ export function useWallet(): UseWalletReturn {
 
       if (!accounts || accounts.length === 0) {
         message.error('No accounts found. Please unlock your wallet.')
+        setConnectingWalletId('')
         return
       }
 
-      await updateWalletInfo(ethersProvider, accounts[0])
-      setupListeners(walletProvider)
+      const account = accounts[0]
+
+      // Close modal and clear connecting state so UI can show main content
+      setIsWalletModalOpen(false)
+      setConnectingWalletId('')
+
+      // Optimistic UI: show account immediately so user sees connected state without waiting for balances/tokens
+      setWalletInfo({ account, balance: BigInt(0), signer: null })
+      setAccountsInfo([{ address: account, name: 'Account 1', nativeBalance: '0', tokens: [] }])
       setConnectedWalletId(wallet.id)
+
+      // Load network, balance and signer in parallel (fast path)
+      const [network, balance, signer] = await Promise.all([
+        ethersProvider.getNetwork(),
+        ethersProvider.getBalance(account),
+        ethersProvider.getSigner(),
+      ])
+      const chainIdHex = `0x${network.chainId.toString(16)}`
+      setCurrentChainId(chainIdHex)
+      setWalletInfo({ account, balance, signer })
+
+      setupListeners(walletProvider)
 
       const isSwitch = walletInfo.account !== ''
       message.success(isSwitch ? `Switched to ${wallet.name}` : `Connected to ${wallet.name}`)
+
+      // Load full account list and tokens in background (no block; fetchAllAccounts manages loading state)
+      fetchAllAccounts(ethersProvider).catch(() => {})
     } catch (error: any) {
+      setConnectingWalletId('')
       message.error(`Failed to connect: ${error.message || 'Unknown error'}`)
     }
-  }, [updateWalletInfo, setupListeners, walletInfo.account])
+  }, [setupListeners, walletInfo.account, fetchAllAccounts])
 
   // Handle network switch - memoized
   const handleNetworkSwitch = useCallback(async (chainId: string) => {
@@ -422,6 +451,7 @@ export function useWallet(): UseWalletReturn {
     currentNetwork,
     nativeSymbol,
     connectedWalletId,
+    connectingWalletId,
     ethersProvider: ethersProviderRef.current,
     setIsWalletModalOpen,
     handleConnectWallet,

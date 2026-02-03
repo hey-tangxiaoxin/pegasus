@@ -1,6 +1,6 @@
 import { memo, useState, type ChangeEvent } from 'react'
 import { Modal, Form, Input, Select, Button } from 'antd'
-import { SendOutlined, DownOutlined, UserOutlined, CloseOutlined } from '@ant-design/icons'
+import { SendOutlined, DownOutlined, CloseOutlined } from '@ant-design/icons'
 import type { AccountInfo } from '../../types'
 import { formatBalance } from '../../utils/format'
 import styles from './index.module.less'
