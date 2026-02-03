@@ -123,11 +123,11 @@ function App() {
         {!walletInfo.account ? (
           <WelcomeSection onConnect={handleConnectWallet} />
         ) : (
-          <>
+          <div className={loading ? styles.accountAreaLoading : undefined}>
             <NetworkSelector
               currentChainId={currentChainId}
               isNetworkSwitching={isNetworkSwitching}
-              isDisabled={!walletInfo.account}
+              isDisabled={!walletInfo.account || loading}
               onNetworkSwitch={handleNetworkSwitch}
               accounts={accountsInfo}
               selectedAccountIndex={selectedAccountIndex}
@@ -145,7 +145,7 @@ function App() {
                 />
               )}
             </Spin>
-          </>
+          </div>
         )}
       </main>
 

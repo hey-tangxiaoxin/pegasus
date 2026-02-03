@@ -64,7 +64,7 @@ export const ReceiveModal = memo(({ open, onClose, address, currentChainId }: Re
       title={null}
       styles={{ mask: { backdropFilter: 'blur(12px)', background: 'rgba(0, 0, 0, 0.6)' } }}
       className={styles.receiveModal}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className={styles.modalHeader}>
         <div className={styles.modalHeaderContent}>
