@@ -178,6 +178,44 @@
   border: 1px dashed rgba(139, 92, 246, 0.15);
 }
 
+// All networks view
+.allNetworksList {
+  display: flex;
+  flex-direction: column;
+  gap: @spacing-lg;
+}
+
+.networkBlock {
+  background: rgba(139, 92, 246, 0.04);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  border-radius: @radius-md;
+  padding: @spacing-md;
+}
+
+.networkBlockHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: @spacing-sm;
+  padding-bottom: @spacing-sm;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+.networkBlockName {
+  font-family: @font-body;
+  font-size: 14px;
+  font-weight: 600;
+  color: @color-text;
+  flex: 1;
+}
+
+.networkBlockNative {
+  font-family: @font-body;
+  font-size: 14px;
+  font-weight: 500;
+  color: @color-text-secondary;
+}
+
 .iconMarginLeft {
   margin-left: 4px;
 }

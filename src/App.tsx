@@ -21,6 +21,7 @@ import {
   ReceiveModal,
 } from './components'
 import type { ActionType } from './components'
+import { ALL_NETWORKS_CHAIN_ID } from './constants'
 
 function App() {
   const [form] = Form.useForm()
@@ -36,11 +37,14 @@ function App() {
     walletInfo,
     accountsInfo,
     loading,
+    loadingAllNetworks,
     isWalletModalOpen,
     availableWallets,
     currentChainId,
+    displayChainId,
     isNetworkSwitching,
     nativeSymbol,
+    allNetworksAccountInfo,
     connectedWalletId,
     connectingWalletId,
     ethersProvider,
@@ -50,6 +54,7 @@ function App() {
     disconnectWallet,
     handleNetworkSwitch,
     fetchAllAccounts,
+    fetchAllNetworksAccount,
   } = useWallet()
 
   // Memoize onSuccess callback to avoid unnecessary re-renders
@@ -101,6 +106,9 @@ function App() {
     setSelectedAccountIndex(index)
   }, [])
 
+  // Get the currently selected account (must be before useEffects that depend on it)
+  const selectedAccount = accountsInfo[selectedAccountIndex]
+
   // Reset selected account index when accounts change
   useEffect(() => {
     if (selectedAccountIndex >= accountsInfo.length && accountsInfo.length > 0) {
@@ -108,8 +116,11 @@ function App() {
     }
   }, [accountsInfo.length, selectedAccountIndex])
 
-  // Get the currently selected account
-  const selectedAccount = accountsInfo[selectedAccountIndex]
+  // When in "All Networks" view and selected account changes, refetch all-networks data for that account
+  useEffect(() => {
+    if (displayChainId !== ALL_NETWORKS_CHAIN_ID || !selectedAccount?.address) return
+    fetchAllNetworksAccount(selectedAccount.address).catch(() => {})
+  }, [displayChainId, selectedAccount?.address, fetchAllNetworksAccount])
 
   return (
     <div className={styles.appContainer}>
@@ -123,9 +134,10 @@ function App() {
         {!walletInfo.account ? (
           <WelcomeSection onConnect={handleConnectWallet} />
         ) : (
-          <div className={loading ? styles.accountAreaLoading : undefined}>
+          <div className={loading || loadingAllNetworks ? styles.accountAreaLoading : undefined}>
             <NetworkSelector
               currentChainId={currentChainId}
+              displayChainId={displayChainId}
               isNetworkSwitching={isNetworkSwitching}
               isDisabled={!walletInfo.account || loading}
               onNetworkSwitch={handleNetworkSwitch}
@@ -134,14 +146,15 @@ function App() {
               onAccountChange={handleAccountChange}
             />
 
-            <ActionButtons onAction={handleAction} disabled={loading} />
+            <ActionButtons onAction={handleAction} disabled={loading || loadingAllNetworks} />
 
-            <Spin spinning={loading}>
+            <Spin spinning={loading || loadingAllNetworks}>
               {selectedAccount && (
                 <AccountCard
                   account={selectedAccount}
                   nativeSymbol={nativeSymbol}
                   onTokenClick={handleTokenClick}
+                  allNetworksData={displayChainId === ALL_NETWORKS_CHAIN_ID ? allNetworksAccountInfo : undefined}
                 />
               )}
             </Spin>

@@ -31,6 +31,9 @@ export interface TokenInfo {
   name: string
   balance: string
   decimals: number
+  /** 仅在“所有网络”视图中存在，表示该代币所在链 */
+  chainId?: string
+  networkName?: string
 }
 
 // 账户信息类型
@@ -38,6 +41,14 @@ export interface AccountInfo {
   name: string
   address: string
   nativeBalance: string  // 原生代币余额（ETH/MATIC/BNB 等）
+  tokens: TokenInfo[]
+}
+
+/** 单条链上的余额与代币（用于“所有网络”视图） */
+export interface NetworkBalanceInfo {
+  chainId: string
+  network: NetworkConfig
+  nativeBalance: string
   tokens: TokenInfo[]
 }
 

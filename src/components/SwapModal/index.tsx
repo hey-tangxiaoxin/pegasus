@@ -26,6 +26,8 @@ const swapTokens = [
   { symbol: 'USDC', icon: '$' },
   { symbol: 'DAI', icon: '◈' },
   { symbol: 'WBTC', icon: '₿' },
+  { symbol: 'OKB', icon: '◎' },
+  { symbol: 'SOL', icon: '◎' },
 ]
 
 export const SwapModal = memo(({ open, onClose, account, nativeSymbol }: SwapModalProps) => {

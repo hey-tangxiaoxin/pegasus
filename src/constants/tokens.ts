@@ -1,4 +1,5 @@
 // 常见代币地址（根据链ID动态获取）
+// 支持 BTC(WBTC/BTCB)、OKB、USDT、USDC、Solana(Wrapped SOL) 等
 export const COMMON_TOKENS: Record<string, { address: string; symbol: string; name: string }[]> = {
   // Ethereum Mainnet
   '0x1': [
@@ -6,6 +7,8 @@ export const COMMON_TOKENS: Record<string, { address: string; symbol: string; na
     { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', name: 'Tether USD' },
     { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI', name: 'Dai Stablecoin' },
     { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', symbol: 'WBTC', name: 'Wrapped BTC' },
+    { address: '0x75231F58b43240C9718Dd58B4967c5114342a86c', symbol: 'OKB', name: 'OKB' },
+    { address: '0xD31a59c85aE9D8edEFeC411D448f90841571b89c', symbol: 'SOL', name: 'Wrapped SOL (Wormhole)' },
   ],
   // Sepolia Testnet
   '0xaa36a7': [
@@ -43,7 +46,9 @@ export const COMMON_TOKENS: Record<string, { address: string; symbol: string; na
   // Base
   '0x2105': [
     { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', symbol: 'USDC', name: 'USD Coin' },
+    { address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', symbol: 'USDT', name: 'Tether USD' },
     { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', symbol: 'DAI', name: 'Dai Stablecoin' },
+    { address: '0x1ceA84203673764244E05693e42E6Ace62bE9BA5', symbol: 'WBTC', name: 'Wrapped BTC' },
   ],
   // Avalanche C-Chain
   '0xa86a': [
@@ -56,10 +61,12 @@ export const COMMON_TOKENS: Record<string, { address: string; symbol: string; na
   '0x144': [
     { address: '0x3355df6D4c9C3035724Fd0e3914dE96A5a83aaf4', symbol: 'USDC', name: 'USD Coin' },
     { address: '0x493257fD37EDB34451f62EDf8D2a0C418852bA4C', symbol: 'USDT', name: 'Tether USD' },
+    { address: '0xBBeB516fb02a01611cBBe045273Fe8F0A0B06C27', symbol: 'WBTC', name: 'Wrapped BTC' },
   ],
   // Linea
   '0xe708': [
     { address: '0x176211869cA2b568f2A7D4EE941E073a821EE1ff', symbol: 'USDC', name: 'USD Coin' },
     { address: '0xA219439258ca9da29E9Cc4cE5596924745e12B93', symbol: 'USDT', name: 'Tether USD' },
+    { address: '0x3aAB2285ddcDdaD8edf438C1bAB47e1a9D05a9b4', symbol: 'WBTC', name: 'Wrapped BTC' },
   ],
 }

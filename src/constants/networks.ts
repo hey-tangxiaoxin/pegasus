@@ -1,5 +1,8 @@
 import type { NetworkConfig } from '../types'
 
+/** 网络下拉框“所有网络”选项的 value，仅用于展示聚合数据，不触发钱包切链 */
+export const ALL_NETWORKS_CHAIN_ID = 'all'
+
 // 支持的网络配置
 export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   // ========== 主网 ==========
@@ -202,6 +205,32 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     iconColor: '#121212',
     isTestnet: true,
   },
+}
+
+/**
+ * 用于「所有网络」只读查询的公开 RPC（无需 API Key，避免 401/400）。
+ * 钱包切链仍用 SUPPORTED_NETWORKS 的 rpcUrls；此处仅用于跨链余额/代币查询。
+ * 注意：URL 勿带尾部斜杠，部分 RPC 会因此返回 400。
+ */
+export const PUBLIC_READ_ONLY_RPC: Partial<Record<string, string>> = {
+  '0x1': 'https://rpc.ankr.com/eth',
+  '0x89': 'https://polygon-rpc.com',
+  '0xa4b1': 'https://arb1.arbitrum.io/rpc',
+  '0xa': 'https://mainnet.optimism.io',
+  '0x38': 'https://bsc-dataseed.binance.org',
+  '0x2105': 'https://mainnet.base.org',
+  '0xa86a': 'https://api.avax.network/ext/bc/C/rpc',
+  '0x144': 'https://mainnet.era.zksync.io',
+  '0xe708': 'https://rpc.linea.build',
+  '0xaa36a7': 'https://ethereum-sepolia.publicnode.com',
+  '0x13882': 'https://rpc-amoy.polygon.technology',
+  '0x66eee': 'https://sepolia-rollup.arbitrum.io/rpc',
+  '0xaa37dc': 'https://sepolia.optimism.io',
+  '0x61': 'https://data-seed-prebsc-1-s1.binance.org:8545',
+  '0x14a34': 'https://sepolia.base.org',
+  '0xa869': 'https://api.avax-test.network/ext/bc/C/rpc',
+  '0x12c': 'https://sepolia.era.zksync.dev',
+  '0xe705': 'https://rpc.sepolia.linea.build',
 }
 
 // 按网络类型分组（主网/测试网）

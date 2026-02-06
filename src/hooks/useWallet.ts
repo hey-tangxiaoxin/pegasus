@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
 import { message } from 'antd'
-import type { WalletProvider, TokenInfo, AccountInfo, NetworkConfig } from '../types'
-import { SUPPORTED_NETWORKS, COMMON_TOKENS, ERC20_ABI } from '../constants'
+import type { WalletProvider, TokenInfo, AccountInfo, NetworkConfig, NetworkBalanceInfo } from '../types'
+import { SUPPORTED_NETWORKS, COMMON_TOKENS, ERC20_ABI, ALL_NETWORKS_CHAIN_ID, PUBLIC_READ_ONLY_RPC } from '../constants'
 import { detectAvailableWallets, getWalletName } from '../utils'
 
 export interface WalletState {
@@ -15,12 +15,17 @@ export interface UseWalletReturn {
   walletInfo: WalletState
   accountsInfo: AccountInfo[]
   loading: boolean
+  loadingAllNetworks: boolean
   isWalletModalOpen: boolean
   availableWallets: WalletProvider[]
   currentChainId: string
+  /** 当前展示用的网络：'all' 表示所有网络聚合，否则为链 ID */
+  displayChainId: string
   isNetworkSwitching: boolean
   currentNetwork: NetworkConfig | null
   nativeSymbol: string
+  /** “所有网络”视图下各链的余额与代币（仅当 displayChainId === 'all' 时有值） */
+  allNetworksAccountInfo: NetworkBalanceInfo[] | null
   connectedWalletId: string
   connectingWalletId: string
   ethersProvider: ethers.BrowserProvider | null
@@ -30,6 +35,7 @@ export interface UseWalletReturn {
   disconnectWallet: () => void
   handleNetworkSwitch: (chainId: string) => Promise<void>
   fetchAllAccounts: (provider: ethers.BrowserProvider) => Promise<void>
+  fetchAllNetworksAccount: (accountAddress: string) => Promise<void>
 }
 
 export function useWallet(): UseWalletReturn {
@@ -43,7 +49,11 @@ export function useWallet(): UseWalletReturn {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [availableWallets, setAvailableWallets] = useState<WalletProvider[]>([])
   const [currentChainId, setCurrentChainId] = useState<string>('')
+  /** 展示用：'all' 或链 ID，选“所有网络”时为 'all' */
+  const [displayChainId, setDisplayChainId] = useState<string>('')
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false)
+  const [loadingAllNetworks, setLoadingAllNetworks] = useState(false)
+  const [allNetworksAccountInfo, setAllNetworksAccountInfo] = useState<NetworkBalanceInfo[] | null>(null)
   const [connectedWalletId, setConnectedWalletId] = useState<string>('')
   const [connectingWalletId, setConnectingWalletId] = useState<string>('')
 
@@ -209,6 +219,45 @@ export function useWallet(): UseWalletReturn {
     }
   }, [fetchAccountTokens])
 
+  // Fetch one account's balance + tokens across all supported networks (read-only via public RPC，避免 Infura 等需鉴权 RPC 返回 401)
+  const fetchAllNetworksAccount = useCallback(async (accountAddress: string) => {
+    setLoadingAllNetworks(true)
+    setAllNetworksAccountInfo(null)
+    try {
+      const entries = Object.entries(SUPPORTED_NETWORKS)
+      const results = await Promise.all(
+        entries.map(async ([chainId, network]): Promise<NetworkBalanceInfo> => {
+          let rpcUrl = PUBLIC_READ_ONLY_RPC[chainId] ?? network.rpcUrls?.[0]
+          if (!rpcUrl) {
+            return { chainId, network, nativeBalance: '0', tokens: [] }
+          }
+          rpcUrl = rpcUrl.replace(/\/+$/, '') // 去掉尾部斜杠，避免部分 RPC 返回 400
+          try {
+            const chainIdNum = parseInt(chainId, 16)
+            const staticNet = ethers.Network.from({ chainId: chainIdNum, name: network.shortName })
+            const provider = new ethers.JsonRpcProvider(rpcUrl, staticNet, { staticNetwork: staticNet })
+            const [nativeBalance, tokens] = await Promise.all([
+              provider.getBalance(accountAddress).then(b => ethers.formatEther(b)),
+              fetchAccountTokens(provider as unknown as ethers.BrowserProvider, accountAddress, chainId),
+            ])
+            tokens.forEach(t => {
+              t.chainId = chainId
+              t.networkName = network.shortName
+            })
+            return { chainId, network, nativeBalance, tokens }
+          } catch {
+            return { chainId, network, nativeBalance: '0', tokens: [] }
+          }
+        })
+      )
+      setAllNetworksAccountInfo(results)
+    } catch {
+      message.error('Failed to fetch balances across networks')
+    } finally {
+      setLoadingAllNetworks(false)
+    }
+  }, [fetchAccountTokens])
+
   // Update current chain ID - memoized
   const updateCurrentChainId = useCallback(async (provider: ethers.BrowserProvider) => {
     try {
@@ -241,6 +290,8 @@ export function useWallet(): UseWalletReturn {
     setWalletInfo({ account: '', balance: BigInt(-1), signer: null })
     setAccountsInfo([])
     setCurrentChainId('')
+    setDisplayChainId('')
+    setAllNetworksAccountInfo(null)
     setConnectedWalletId('')
     walletProviderRef.current?.removeAllListeners?.()
     walletProviderRef.current = null
@@ -265,6 +316,7 @@ export function useWallet(): UseWalletReturn {
       provider.on('chainChanged', async (chainIdHex: string) => {
         try {
           setCurrentChainId(chainIdHex)
+          setDisplayChainId(chainIdHex)
 
           if (walletProviderRef.current) {
             const newProvider = new ethers.BrowserProvider(walletProviderRef.current)
@@ -372,6 +424,7 @@ export function useWallet(): UseWalletReturn {
       ])
       const chainIdHex = `0x${network.chainId.toString(16)}`
       setCurrentChainId(chainIdHex)
+      setDisplayChainId(chainIdHex)
       setWalletInfo({ account, balance, signer })
 
       setupListeners(walletProvider)
@@ -387,13 +440,26 @@ export function useWallet(): UseWalletReturn {
     }
   }, [setupListeners, walletInfo.account, fetchAllAccounts])
 
-  // Handle network switch - memoized
+  // Handle network switch - memoized（支持选择「所有网络」仅聚合展示，不切链）
   const handleNetworkSwitch = useCallback(async (chainId: string) => {
+    if (chainId === ALL_NETWORKS_CHAIN_ID) {
+      if (!walletInfo.account) {
+        message.error('Please connect your wallet first')
+        return
+      }
+      setDisplayChainId(ALL_NETWORKS_CHAIN_ID)
+      // Actual fetch is triggered by App effect when displayChainId becomes 'all' and selectedAccount is set
+      return
+    }
+
     if (!walletProviderRef.current) {
       message.error('Please connect your wallet first')
       return
     }
-    if (chainId === currentChainId) return
+    if (chainId === currentChainId) {
+      setDisplayChainId(chainId)
+      return
+    }
 
     setIsNetworkSwitching(true)
     const networkConfig = SUPPORTED_NETWORKS[chainId]
@@ -409,6 +475,7 @@ export function useWallet(): UseWalletReturn {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId }],
       })
+      setDisplayChainId(chainId)
       message.success(`Switched to ${networkConfig.chainName}`)
     } catch (switchError: any) {
       if (switchError.code === 4902) {
@@ -423,6 +490,7 @@ export function useWallet(): UseWalletReturn {
               blockExplorerUrls: networkConfig.blockExplorerUrls,
             }],
           })
+          setDisplayChainId(chainId)
           message.success(`Added and switched to ${networkConfig.chainName}`)
         } catch (addNetworkError: any) {
           message.error(`Failed to add network: ${addNetworkError.message || 'Unknown error'}`)
@@ -435,7 +503,7 @@ export function useWallet(): UseWalletReturn {
     } finally {
       setIsNetworkSwitching(false)
     }
-  }, [currentChainId])
+  }, [currentChainId, walletInfo.account, fetchAllNetworksAccount])
 
   // Cleanup on unmount
   useEffect(() => () => walletProviderRef.current?.removeAllListeners?.(), [])
@@ -444,12 +512,15 @@ export function useWallet(): UseWalletReturn {
     walletInfo,
     accountsInfo,
     loading,
+    loadingAllNetworks,
     isWalletModalOpen,
     availableWallets,
     currentChainId,
+    displayChainId,
     isNetworkSwitching,
     currentNetwork,
     nativeSymbol,
+    allNetworksAccountInfo,
     connectedWalletId,
     connectingWalletId,
     ethersProvider: ethersProviderRef.current,
@@ -459,5 +530,6 @@ export function useWallet(): UseWalletReturn {
     disconnectWallet,
     handleNetworkSwitch,
     fetchAllAccounts,
+    fetchAllNetworksAccount,
   }
 }
