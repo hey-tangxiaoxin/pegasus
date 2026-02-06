@@ -1,14 +1,20 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
 import { message } from 'antd'
-import type { WalletProvider, TokenInfo, AccountInfo, NetworkConfig, NetworkBalanceInfo } from '../types'
-import { SUPPORTED_NETWORKS, COMMON_TOKENS, ERC20_ABI, ALL_NETWORKS_CHAIN_ID, PUBLIC_READ_ONLY_RPC } from '../constants'
+import type { WalletProvider, TokenInfo, AccountInfo, NetworkConfig, NetworkBalanceInfo, WalletState } from '../types'
+import { ERC20_ABI, ALL_NETWORKS_CHAIN_ID, SOLANA_CHAIN_ID, BITCOIN_CHAIN_ID } from '../constants'
+import { useNetworks } from '../contexts/NetworksContext'
 import { detectAvailableWallets, getWalletName } from '../utils'
+import { connectSolana as connectSolanaUtil, connectBitcoin as connectBitcoinUtil } from '../utils/walletNonEvm'
 
-export interface WalletState {
-  account: string
-  balance: bigint
-  signer: ethers.Signer | null
+const SKIP_AUTO_CONNECT_KEY = 'pegasus_skip_auto_connect'
+
+function shouldSkipAutoConnect(): boolean {
+  try {
+    return sessionStorage.getItem(SKIP_AUTO_CONNECT_KEY) === '1'
+  } catch {
+    return false
+  }
 }
 
 export interface UseWalletReturn {
@@ -24,8 +30,12 @@ export interface UseWalletReturn {
   isNetworkSwitching: boolean
   currentNetwork: NetworkConfig | null
   nativeSymbol: string
-  /** “所有网络”视图下各链的余额与代币（仅当 displayChainId === 'all' 时有值） */
-  allNetworksAccountInfo: NetworkBalanceInfo[] | null
+  /** “所有网络”视图：每个账号 + 各链余额（含 Solana），仅当 displayChainId === 'all' 时有值 */
+  allNetworksByAccount: Array<{ account: AccountInfo; networkBalances: NetworkBalanceInfo[] }> | null
+  /** 仅拉取当前选中账户在各链的余额与代币；需传入当前选中的 EVM 账户下标 */
+  fetchAllNetworksForAllAccounts: (selectedAccountIndex: number) => Promise<void>
+  /** 仅拉取当前链下指定账户的 token 列表（用于切换账户时按需加载） */
+  fetchTokensForAccount: (accountIndex: number) => void
   connectedWalletId: string
   connectingWalletId: string
   ethersProvider: ethers.BrowserProvider | null
@@ -35,10 +45,16 @@ export interface UseWalletReturn {
   disconnectWallet: () => void
   handleNetworkSwitch: (chainId: string) => Promise<void>
   fetchAllAccounts: (provider: ethers.BrowserProvider) => Promise<void>
-  fetchAllNetworksAccount: (accountAddress: string) => Promise<void>
+  /** Solana 账户（仅当选择 Solana 网络时使用） */
+  solanaAccount: { publicKey: string; balance: string } | null
+  connectSolanaWallet: () => Promise<void>
+  /** Bitcoin 账户（仅当选择 Bitcoin 网络时使用） */
+  bitcoinAccount: { address: string; balance: string } | null
+  connectBitcoinWallet: () => Promise<void>
 }
 
 export function useWallet(): UseWalletReturn {
+  const { supportedNetworks, getPublicRpc, getTokensForChain } = useNetworks()
   const [walletInfo, setWalletInfo] = useState<WalletState>({
     account: '',
     balance: BigInt(-1),
@@ -50,10 +66,12 @@ export function useWallet(): UseWalletReturn {
   const [availableWallets, setAvailableWallets] = useState<WalletProvider[]>([])
   const [currentChainId, setCurrentChainId] = useState<string>('')
   /** 展示用：'all' 或链 ID，选“所有网络”时为 'all' */
-  const [displayChainId, setDisplayChainId] = useState<string>('')
+  const [displayChainId, setDisplayChainId] = useState<string>(ALL_NETWORKS_CHAIN_ID)
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false)
   const [loadingAllNetworks, setLoadingAllNetworks] = useState(false)
-  const [allNetworksAccountInfo, setAllNetworksAccountInfo] = useState<NetworkBalanceInfo[] | null>(null)
+  const [allNetworksByAccount, setAllNetworksByAccount] = useState<Array<{ account: AccountInfo; networkBalances: NetworkBalanceInfo[] }> | null>(null)
+  const [solanaAccount, setSolanaAccount] = useState<{ publicKey: string; balance: string } | null>(null)
+  const [bitcoinAccount, setBitcoinAccount] = useState<{ address: string; balance: string } | null>(null)
   const [connectedWalletId, setConnectedWalletId] = useState<string>('')
   const [connectingWalletId, setConnectingWalletId] = useState<string>('')
 
@@ -118,13 +136,15 @@ export function useWallet(): UseWalletReturn {
     })
   }, [detectWallets])
 
-  // Memoize current network to avoid unnecessary recalculations
+  // 展示用网络：优先 displayChainId（含 Solana），否则用钱包当前链
   const currentNetwork = useMemo(() => {
-    if (!currentChainId) return null
-    return SUPPORTED_NETWORKS[currentChainId] || null
-  }, [currentChainId])
+    if (displayChainId && displayChainId !== ALL_NETWORKS_CHAIN_ID)
+      return supportedNetworks[displayChainId] ?? null
+    if (currentChainId) return supportedNetworks[currentChainId] ?? null
+    return null
+  }, [displayChainId, currentChainId, supportedNetworks])
 
-  const nativeSymbol = useMemo(() => 
+  const nativeSymbol = useMemo(() =>
     currentNetwork?.nativeCurrency.symbol || 'ETH', [currentNetwork])
 
   // Get token info - memoized to avoid recreating on each render
@@ -156,20 +176,20 @@ export function useWallet(): UseWalletReturn {
     }
   }, [])
 
-  // Fetch account tokens - memoized
+  // Fetch account tokens - memoized（代币列表来自 1inch 动态接口）
   const fetchAccountTokens = useCallback(async (
     provider: ethers.BrowserProvider,
     accountAddress: string,
     chainId: string
   ): Promise<TokenInfo[]> => {
-    const tokens = COMMON_TOKENS[chainId] || []
+    const tokens = await getTokensForChain(chainId)
     const tokenInfos = await Promise.all(
       tokens.map(token => getTokenInfo(provider, token.address, accountAddress))
     )
     return tokenInfos.filter((token): token is TokenInfo => token !== null)
-  }, [getTokenInfo])
+  }, [getTokenInfo, getTokensForChain])
 
-  // Fetch all accounts
+  // Fetch all accounts：仅拉取原生余额与 ENS，不拉取 token；token 由 fetchTokensForAccount 按当前选中账户按需拉取
   const fetchAllAccounts = useCallback(async (provider: ethers.BrowserProvider) => {
     if (!provider) return
     setLoading(true)
@@ -188,30 +208,37 @@ export function useWallet(): UseWalletReturn {
       const accountsData = await Promise.all(
         accounts.map(async (address: string, index: number) => {
           try {
-            const [nativeTokenBalance, tokenList, ensName] = await Promise.all([
+            const [nativeTokenBalance, ensName] = await Promise.all([
               provider.getBalance(address),
-              fetchAccountTokens(provider, address, chainIdHex),
               provider.lookupAddress(address).catch(() => null as string | null),
             ])
-
             return {
               address,
               name: ensName ?? `Account ${index + 1}`,
               nativeBalance: ethers.formatEther(nativeTokenBalance),
-              tokens: tokenList,
+              tokens: [] as TokenInfo[],
             }
           } catch {
             return {
               address,
               name: `Account ${index + 1}`,
               nativeBalance: '0',
-              tokens: [],
+              tokens: [] as TokenInfo[],
             }
           }
         })
       )
 
       setAccountsInfo(accountsData)
+
+      // 仅拉取当前链下「第一个账户」的 token，其余账户在用户切换时再按需拉取
+      const tokenList = await fetchAccountTokens(provider, accountsData[0].address, chainIdHex)
+      setAccountsInfo(prev => {
+        if (prev.length === 0) return prev
+        const next = [...prev]
+        next[0] = { ...next[0], tokens: tokenList }
+        return next
+      })
     } catch {
       message.error('Failed to fetch account information')
     } finally {
@@ -219,44 +246,102 @@ export function useWallet(): UseWalletReturn {
     }
   }, [fetchAccountTokens])
 
-  // Fetch one account's balance + tokens across all supported networks (read-only via public RPC，避免 Infura 等需鉴权 RPC 返回 401)
-  const fetchAllNetworksAccount = useCallback(async (accountAddress: string) => {
-    setLoadingAllNetworks(true)
-    setAllNetworksAccountInfo(null)
-    try {
-      const entries = Object.entries(SUPPORTED_NETWORKS)
-      const results = await Promise.all(
-        entries.map(async ([chainId, network]): Promise<NetworkBalanceInfo> => {
-          let rpcUrl = PUBLIC_READ_ONLY_RPC[chainId] ?? network.rpcUrls?.[0]
-          if (!rpcUrl) {
-            return { chainId, network, nativeBalance: '0', tokens: [] }
-          }
-          rpcUrl = rpcUrl.replace(/\/+$/, '') // 去掉尾部斜杠，避免部分 RPC 返回 400
-          try {
-            const chainIdNum = parseInt(chainId, 16)
-            const staticNet = ethers.Network.from({ chainId: chainIdNum, name: network.shortName })
-            const provider = new ethers.JsonRpcProvider(rpcUrl, staticNet, { staticNetwork: staticNet })
-            const [nativeBalance, tokens] = await Promise.all([
-              provider.getBalance(accountAddress).then(b => ethers.formatEther(b)),
-              fetchAccountTokens(provider as unknown as ethers.BrowserProvider, accountAddress, chainId),
-            ])
-            tokens.forEach(t => {
-              t.chainId = chainId
-              t.networkName = network.shortName
-            })
-            return { chainId, network, nativeBalance, tokens }
-          } catch {
-            return { chainId, network, nativeBalance: '0', tokens: [] }
-          }
+  // 仅拉取指定账户在当前链下的 token 列表（切换账户时按需调用）
+  const fetchTokensForAccount = useCallback((accountIndex: number) => {
+    const provider = ethersProviderRef.current
+    if (!provider || !currentChainId) return
+    setAccountsInfo(prev => {
+      if (accountIndex < 0 || accountIndex >= prev.length) return prev
+      const address = prev[accountIndex].address
+      fetchAccountTokens(provider, address, currentChainId)
+        .then(tokenList => {
+          setAccountsInfo(p => {
+            if (accountIndex >= p.length) return p
+            const n = [...p]
+            n[accountIndex] = { ...n[accountIndex], tokens: tokenList }
+            return n
+          })
         })
-      )
-      setAllNetworksAccountInfo(results)
+        .catch(() => message.error('Failed to fetch tokens'))
+      return prev
+    })
+  }, [currentChainId, fetchAccountTokens])
+
+  // 单地址在所有 EVM 链上的余额与代币（仅 EVM，不含 Solana）
+  const fetchAllNetworksForOneAddress = useCallback(async (accountAddress: string): Promise<NetworkBalanceInfo[]> => {
+    const entries = Object.entries(supportedNetworks).filter(([chainId]) => chainId !== SOLANA_CHAIN_ID && chainId !== BITCOIN_CHAIN_ID)
+    const results = await Promise.all(
+      entries.map(async ([chainId, network]): Promise<NetworkBalanceInfo> => {
+        let rpcUrl = getPublicRpc(chainId) || network.rpcUrls?.[0]
+        if (!rpcUrl) return { chainId, network, nativeBalance: '0', tokens: [] }
+        rpcUrl = rpcUrl.replace(/\/+$/, '')
+        try {
+          const chainIdNum = parseInt(chainId, 16)
+          const staticNet = ethers.Network.from({ chainId: chainIdNum, name: network.shortName })
+          const provider = new ethers.JsonRpcProvider(rpcUrl, staticNet, { staticNetwork: staticNet })
+          const [nativeBalance, tokens] = await Promise.all([
+            provider.getBalance(accountAddress).then(b => ethers.formatEther(b)),
+            fetchAccountTokens(provider as unknown as ethers.BrowserProvider, accountAddress, chainId),
+          ])
+          tokens.forEach(t => {
+            t.chainId = chainId
+            t.networkName = network.shortName
+          })
+          return { chainId, network, nativeBalance, tokens }
+        } catch {
+          return { chainId, network, nativeBalance: '0', tokens: [] }
+        }
+      })
+    )
+    return results
+  }, [supportedNetworks, getPublicRpc, getTokensForChain, fetchAccountTokens])
+
+  // “所有网络”：仅拉取「当前选中」EVM 账户在各链的余额与代币，以及 Solana/Bitcoin（若有）
+  const fetchAllNetworksForAllAccounts = useCallback(async (selectedAccountIndex: number) => {
+    setLoadingAllNetworks(true)
+    setAllNetworksByAccount(null)
+    try {
+      const list: Array<{ account: AccountInfo; networkBalances: NetworkBalanceInfo[] }> = []
+      const selectedAccount = accountsInfo[selectedAccountIndex]
+      if (selectedAccount) {
+        const networkBalances = await fetchAllNetworksForOneAddress(selectedAccount.address)
+        list.push({ account: selectedAccount, networkBalances })
+      }
+      if (solanaAccount && supportedNetworks[SOLANA_CHAIN_ID]) {
+        const solanaNetwork = supportedNetworks[SOLANA_CHAIN_ID]
+        list.push({
+          account: {
+            name: 'Solana',
+            address: solanaAccount.publicKey,
+            nativeBalance: solanaAccount.balance,
+            tokens: [],
+          },
+          networkBalances: [
+            { chainId: SOLANA_CHAIN_ID, network: solanaNetwork, nativeBalance: solanaAccount.balance, tokens: [] },
+          ],
+        })
+      }
+      if (bitcoinAccount && supportedNetworks[BITCOIN_CHAIN_ID]) {
+        const bitcoinNetwork = supportedNetworks[BITCOIN_CHAIN_ID]
+        list.push({
+          account: {
+            name: 'Bitcoin',
+            address: bitcoinAccount.address,
+            nativeBalance: bitcoinAccount.balance,
+            tokens: [],
+          },
+          networkBalances: [
+            { chainId: BITCOIN_CHAIN_ID, network: bitcoinNetwork, nativeBalance: bitcoinAccount.balance, tokens: [] },
+          ],
+        })
+      }
+      setAllNetworksByAccount(list)
     } catch {
       message.error('Failed to fetch balances across networks')
     } finally {
       setLoadingAllNetworks(false)
     }
-  }, [fetchAccountTokens])
+  }, [accountsInfo, solanaAccount, bitcoinAccount, supportedNetworks, fetchAllNetworksForOneAddress])
 
   // Update current chain ID - memoized
   const updateCurrentChainId = useCallback(async (provider: ethers.BrowserProvider) => {
@@ -285,13 +370,63 @@ export function useWallet(): UseWalletReturn {
     }
   }, [updateCurrentChainId, fetchAllAccounts])
 
-  // Disconnect wallet
+  const tryAutoConnectSolana = useCallback(async (silent: boolean): Promise<boolean> => {
+    const data = await connectSolanaUtil()
+    if (data) {
+      setSolanaAccount(data)
+      if (!silent) {
+        try { sessionStorage.removeItem(SKIP_AUTO_CONNECT_KEY) } catch { /* ignore */ }
+        message.success('Solana wallet connected')
+      }
+      return true
+    }
+    if (!silent) {
+      message.error(typeof window !== 'undefined' && window.solana ? 'Failed to connect Solana wallet' : 'Please install Phantom or another Solana wallet')
+    }
+    return false
+  }, [])
+
+  const tryAutoConnectBitcoin = useCallback(async (silent: boolean): Promise<boolean> => {
+    const data = await connectBitcoinUtil()
+    if (data) {
+      setBitcoinAccount(data)
+      if (!silent) {
+        try { sessionStorage.removeItem(SKIP_AUTO_CONNECT_KEY) } catch { /* ignore */ }
+        message.success('Bitcoin wallet connected')
+      }
+      return true
+    }
+    if (!silent) {
+      message.error(typeof window !== 'undefined' && window.unisat ? 'No Bitcoin address returned' : 'Please install Unisat Wallet or another Bitcoin wallet extension')
+    }
+    return false
+  }, [])
+
+  const connectSolanaWallet = useCallback(async () => {
+    await tryAutoConnectSolana(false)
+  }, [tryAutoConnectSolana])
+  const connectBitcoinWallet = useCallback(async () => {
+    await tryAutoConnectBitcoin(false)
+  }, [tryAutoConnectBitcoin])
+
+  const tryAutoConnectNonEvmWallets = useCallback(async () => {
+    await Promise.all([
+      tryAutoConnectSolana(true),
+      tryAutoConnectBitcoin(true),
+    ])
+  }, [tryAutoConnectSolana, tryAutoConnectBitcoin])
+
   const disconnectWallet = useCallback(() => {
+    try {
+      sessionStorage.setItem(SKIP_AUTO_CONNECT_KEY, '1')
+    } catch { /* ignore */ }
     setWalletInfo({ account: '', balance: BigInt(-1), signer: null })
     setAccountsInfo([])
     setCurrentChainId('')
-    setDisplayChainId('')
-    setAllNetworksAccountInfo(null)
+    setDisplayChainId(ALL_NETWORKS_CHAIN_ID)
+    setAllNetworksByAccount(null)
+    setSolanaAccount(null)
+    setBitcoinAccount(null)
     setConnectedWalletId('')
     walletProviderRef.current?.removeAllListeners?.()
     walletProviderRef.current = null
@@ -326,7 +461,7 @@ export function useWallet(): UseWalletReturn {
               await updateWalletInfo(newProvider, accounts[0])
             }
 
-            const network = SUPPORTED_NETWORKS[chainIdHex]
+            const network = supportedNetworks[chainIdHex]
             if (network) {
               message.info(`Network changed to ${network.chainName}`)
             } else {
@@ -410,6 +545,9 @@ export function useWallet(): UseWalletReturn {
       // Close modal and clear connecting state so UI can show main content
       setIsWalletModalOpen(false)
       setConnectingWalletId('')
+      try {
+        sessionStorage.removeItem(SKIP_AUTO_CONNECT_KEY)
+      } catch { /* ignore */ }
 
       // Optimistic UI: show account immediately so user sees connected state without waiting for balances/tokens
       setWalletInfo({ account, balance: BigInt(0), signer: null })
@@ -424,7 +562,7 @@ export function useWallet(): UseWalletReturn {
       ])
       const chainIdHex = `0x${network.chainId.toString(16)}`
       setCurrentChainId(chainIdHex)
-      setDisplayChainId(chainIdHex)
+      setDisplayChainId(ALL_NETWORKS_CHAIN_ID)
       setWalletInfo({ account, balance, signer })
 
       setupListeners(walletProvider)
@@ -434,21 +572,32 @@ export function useWallet(): UseWalletReturn {
 
       // Load full account list and tokens in background (no block; fetchAllAccounts manages loading state)
       fetchAllAccounts(ethersProvider).catch(() => {})
+      // Auto-connect Solana & Bitcoin so "All Networks" shows them without manual connect
+      tryAutoConnectNonEvmWallets().catch(() => {})
     } catch (error: any) {
       setConnectingWalletId('')
       message.error(`Failed to connect: ${error.message || 'Unknown error'}`)
     }
-  }, [setupListeners, walletInfo.account, fetchAllAccounts])
+  }, [setupListeners, walletInfo.account, fetchAllAccounts, tryAutoConnectNonEvmWallets])
 
   // Handle network switch - memoized（支持选择「所有网络」仅聚合展示，不切链）
   const handleNetworkSwitch = useCallback(async (chainId: string) => {
     if (chainId === ALL_NETWORKS_CHAIN_ID) {
-      if (!walletInfo.account) {
+      const hasAny = !!(walletInfo.account || solanaAccount || bitcoinAccount)
+      if (!hasAny) {
         message.error('Please connect your wallet first')
         return
       }
       setDisplayChainId(ALL_NETWORKS_CHAIN_ID)
-      // Actual fetch is triggered by App effect when displayChainId becomes 'all' and selectedAccount is set
+      return
+    }
+
+    if (chainId === SOLANA_CHAIN_ID) {
+      setDisplayChainId(SOLANA_CHAIN_ID)
+      return
+    }
+    if (chainId === BITCOIN_CHAIN_ID) {
+      setDisplayChainId(BITCOIN_CHAIN_ID)
       return
     }
 
@@ -462,7 +611,7 @@ export function useWallet(): UseWalletReturn {
     }
 
     setIsNetworkSwitching(true)
-    const networkConfig = SUPPORTED_NETWORKS[chainId]
+    const networkConfig = supportedNetworks[chainId]
 
     if (!networkConfig) {
       message.error('Unsupported network')
@@ -503,7 +652,13 @@ export function useWallet(): UseWalletReturn {
     } finally {
       setIsNetworkSwitching(false)
     }
-  }, [currentChainId, walletInfo.account, fetchAllNetworksAccount])
+  }, [currentChainId, walletInfo.account, solanaAccount, bitcoinAccount, supportedNetworks])
+
+  // Auto-connect Solana & Bitcoin on mount only if user has not explicitly disconnected (refresh after disconnect should stay disconnected)
+  useEffect(() => {
+    if (shouldSkipAutoConnect()) return
+    tryAutoConnectNonEvmWallets().catch(() => {})
+  }, [tryAutoConnectNonEvmWallets])
 
   // Cleanup on unmount
   useEffect(() => () => walletProviderRef.current?.removeAllListeners?.(), [])
@@ -520,7 +675,7 @@ export function useWallet(): UseWalletReturn {
     isNetworkSwitching,
     currentNetwork,
     nativeSymbol,
-    allNetworksAccountInfo,
+    allNetworksByAccount,
     connectedWalletId,
     connectingWalletId,
     ethersProvider: ethersProviderRef.current,
@@ -530,6 +685,11 @@ export function useWallet(): UseWalletReturn {
     disconnectWallet,
     handleNetworkSwitch,
     fetchAllAccounts,
-    fetchAllNetworksAccount,
+    fetchAllNetworksForAllAccounts,
+    fetchTokensForAccount,
+    solanaAccount,
+    connectSolanaWallet,
+    bitcoinAccount,
+    connectBitcoinWallet,
   }
 }

@@ -16,10 +16,29 @@
 
 .mainContent {
   flex: 1;
-  max-width: 800px;
+  max-width: 960px;
   width: 100%;
   margin: 0 auto;
   padding: @spacing-xl @spacing-md;
+}
+
+// 统一内容区高度，避免 Welcome ↔ 已连接 切换时布局跳动
+.contentArea {
+  min-height: 60vh;
+  transition: opacity @transition-normal;
+}
+
+.contentBlock {
+  animation: contentFadeIn 0.25s ease-out;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 // 账户数据加载中：整块账户区域不可点击、不可选

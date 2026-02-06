@@ -63,4 +63,31 @@ export const NetworkIcons: Record<string, React.ReactElement> = {
       <circle cx="30" cy="30" r="6" fill="#fff"/>
     </svg>
   ),
+  bitcoin: (
+    <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="16" fill="#F7931A"/>
+      <path d="M22.5 14.6c.2-1.4-.8-2.2-2.3-2.7l.5-1.9-1.1-.3-.5 1.8c-.3-.1-.6-.2-.9-.3l.5-1.8-1.1-.3-.5 1.9c-.2-.1-.5-.1-.7-.2l-1.7-.4-.3 1.2s1 .2 1 .2c.5.1.6.5.6.7l-.7 2.6c0 .1-.1.1-.2 0l-.9-.2-1.4 5.3c-.1.2 0 .5.2.6l.9-.2c.1 0 .2 0 .2.1l-.5 2c-.1.2.2.3.3.2l1.1-.3.5 1.9 1.1.3-.5 1.9c.3.1.6.2.9.3l-.5 1.8 1.1.3.5-1.9c1.8.3 3.2.2 3.8-1.5.5-1.3 0-2-.9-2.5.6-.2 1.1-.4 1.2-1 .1-.4-.1-.6-.5-.8zm-3 4.4c-.3 1.3-2.5.6-3.2.4l.6-2.2c.7.2 2.9.5 2.6 1.8zm.3-4.5c-.3 1.1-1.9.5-2.4.4l.5-2c.5.1 2.1.4 1.9 1.6z" fill="#fff"/>
+    </svg>
+  ),
+  solana: (
+    <svg width="20" height="20" viewBox="0 0 397 311" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5 0 7.5 6 3.9 9.2l-62.7 46.9c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5 0-7.5-6-3.9-9.2l62-46.9z" fill="url(#solana-a)"/>
+      <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5 0 7.5 6 3.9 9.2l-62.7 46.9c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5 0-7.5-6-3.9-9.2L64.6 3.8z" fill="url(#solana-b)"/>
+      <path d="M332.3 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H5.7c-5 0-7.5 6-3.9 9.2l62.7 46.9c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5 0 7.5-6 3.9-9.2l-62.7-46.9z" fill="url(#solana-c)"/>
+      <defs>
+        <linearGradient id="solana-a" x1="360.9" y1="351.5" x2="141.6" y2="-69.2" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#00FFA3"/>
+          <stop offset="1" stopColor="#DC1FFF"/>
+        </linearGradient>
+        <linearGradient id="solana-b" x1="264.5" y1="401.6" x2="45.2" y2="-19.1" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#00FFA3"/>
+          <stop offset="1" stopColor="#DC1FFF"/>
+        </linearGradient>
+        <linearGradient id="solana-c" x1="312.4" y1="376.7" x2="93.1" y2="-43.9" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#00FFA3"/>
+          <stop offset="1" stopColor="#DC1FFF"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
 }

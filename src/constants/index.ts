@@ -1,4 +1,4 @@
-export { SUPPORTED_NETWORKS, getGroupedNetworks, ALL_NETWORKS_CHAIN_ID, PUBLIC_READ_ONLY_RPC } from './networks'
+export { SUPPORTED_NETWORKS, getSolanaNetworkConfig, getBitcoinNetworkConfig, ALL_NETWORKS_CHAIN_ID, SOLANA_CHAIN_ID, BITCOIN_CHAIN_ID, PUBLIC_READ_ONLY_RPC } from './networks'
 export { COMMON_TOKENS } from './tokens'
 export { ERC20_ABI } from './abi'
 export { NetworkIcons } from './icons'

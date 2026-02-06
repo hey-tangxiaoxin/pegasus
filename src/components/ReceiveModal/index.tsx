@@ -3,12 +3,14 @@ import { Modal, Typography, Button, Tabs } from 'antd'
 import { QrcodeOutlined, CopyOutlined, CheckCircleFilled, CloseOutlined } from '@ant-design/icons'
 import { QRCodeSVG } from 'qrcode.react'
 import { copyToClipboard } from '../../utils'
-import { SUPPORTED_NETWORKS, getGroupedNetworks } from '../../constants'
+import { useNetworks } from '../../contexts/NetworksContext'
 import { NetworkIcon } from '../NetworkIcon'
 import type { NetworkConfig } from '../../types'
 import styles from './index.module.less'
 
 const { Text } = Typography
+
+const getNetworkLabel = (n: NetworkConfig) => n.displayName ?? n.shortName ?? n.chainName
 
 interface ReceiveModalProps {
   open: boolean
@@ -18,16 +20,17 @@ interface ReceiveModalProps {
 }
 
 export const ReceiveModal = memo(({ open, onClose, address, currentChainId }: ReceiveModalProps) => {
+  const { supportedNetworks, getGroupedNetworks } = useNetworks()
+  const { mainnetList, testnetList } = useMemo(() => getGroupedNetworks(), [getGroupedNetworks])
   const [selectedChainId, setSelectedChainId] = useState<string | null>(currentChainId)
   const [copied, setCopied] = useState(false)
-  const { mainnetList, testnetList } = useMemo(() => getGroupedNetworks(), [])
 
   useEffect(() => {
     if (currentChainId) setSelectedChainId(currentChainId)
   }, [currentChainId])
 
   const effectiveChainId = selectedChainId || currentChainId
-  const selectedNetwork: NetworkConfig | null = effectiveChainId ? SUPPORTED_NETWORKS[effectiveChainId] : null
+  const selectedNetwork: NetworkConfig | null = effectiveChainId ? supportedNetworks[effectiveChainId] : null
 
   const handleCopy = () => {
     copyToClipboard(address)
@@ -45,7 +48,7 @@ export const ReceiveModal = memo(({ open, onClose, address, currentChainId }: Re
         >
           <div className={styles.networkInfo}>
             <NetworkIcon network={network} size={22} />
-            <span className={styles.networkName}>{network.shortName}</span>
+            <span className={styles.networkName}>{getNetworkLabel(network)}</span>
           </div>
           {effectiveChainId === chainId && <CheckCircleFilled className={styles.checkIcon} />}
         </div>
@@ -99,7 +102,7 @@ export const ReceiveModal = memo(({ open, onClose, address, currentChainId }: Re
               <>
                 <div className={styles.selectedNetworkBadge}>
                   <NetworkIcon network={selectedNetwork} size={20} />
-                  <Text>{selectedNetwork.chainName}</Text>
+                  <Text>{getNetworkLabel(selectedNetwork)}</Text>
                 </div>
                 <div className={styles.qrWrapper}>
                   <QRCodeSVG value={address} size={180} level="M" bgColor="#ffffff" fgColor="#000000" />
@@ -121,7 +124,7 @@ export const ReceiveModal = memo(({ open, onClose, address, currentChainId }: Re
                 </div>
                 <div className={styles.warningBox}>
                   <Text className={styles.warningText}>
-                    ⚠️ Please ensure the sender uses the <strong>{selectedNetwork.chainName}</strong> network, otherwise assets may be lost
+                    ⚠️ Please ensure the sender uses the <strong>{getNetworkLabel(selectedNetwork)}</strong> network, otherwise assets may be lost
                   </Text>
                 </div>
               </>

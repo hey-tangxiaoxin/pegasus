@@ -3,6 +3,44 @@ import type { NetworkConfig } from '../types'
 /** 网络下拉框“所有网络”选项的 value，仅用于展示聚合数据，不触发钱包切链 */
 export const ALL_NETWORKS_CHAIN_ID = 'all'
 
+/** Solana 主网在配置中的 chainId（非 EVM，不参与 wallet_switchEthereumChain） */
+export const SOLANA_CHAIN_ID = 'solana'
+
+/** Bitcoin 主网在配置中的 chainId（非 EVM，不参与 wallet_switchEthereumChain） */
+export const BITCOIN_CHAIN_ID = 'bitcoin'
+
+/** Solana 网络配置（用于与 chainid.network 动态链列表合并） */
+export function getSolanaNetworkConfig(): NetworkConfig {
+  return {
+    chainId: SOLANA_CHAIN_ID,
+    chainName: 'Solana',
+    shortName: 'Solana',
+    displayName: 'Solana',
+    nativeCurrency: { name: 'SOL', symbol: 'SOL', decimals: 9 },
+    rpcUrls: ['https://solana.publicnode.com'],
+    blockExplorerUrls: ['https://explorer.solana.com'],
+    iconKey: 'solana',
+    iconColor: '#9945FF',
+    isTestnet: false,
+  }
+}
+
+/** Bitcoin 网络配置（用于与 chainid.network 动态链列表合并） */
+export function getBitcoinNetworkConfig(): NetworkConfig {
+  return {
+    chainId: BITCOIN_CHAIN_ID,
+    chainName: 'Bitcoin',
+    shortName: 'Bitcoin',
+    displayName: 'Bitcoin',
+    nativeCurrency: { name: 'Bitcoin', symbol: 'BTC', decimals: 8 },
+    rpcUrls: ['https://mempool.space/api'],
+    blockExplorerUrls: ['https://mempool.space'],
+    iconKey: 'bitcoin',
+    iconColor: '#F7931A',
+    isTestnet: false,
+  }
+}
+
 // 支持的网络配置
 export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   // ========== 主网 ==========
@@ -33,7 +71,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainName: 'Arbitrum One',
     shortName: 'Arbitrum',
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+    rpcUrls: ['https://rpc.ankr.com/arbitrum'],
     blockExplorerUrls: ['https://arbiscan.io'],
     iconKey: 'arbitrum',
     iconColor: '#28A0F0',
@@ -77,7 +115,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainName: 'Avalanche C-Chain',
     shortName: 'Avalanche',
     nativeCurrency: { name: 'AVAX', symbol: 'AVAX', decimals: 18 },
-    rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
+    rpcUrls: ['https://rpc.ankr.com/avalanche'],
     blockExplorerUrls: ['https://snowtrace.io'],
     iconKey: 'avalanche',
     iconColor: '#E84142',
@@ -105,6 +143,8 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     iconColor: '#121212',
     isTestnet: false,
   },
+  [SOLANA_CHAIN_ID]: getSolanaNetworkConfig(),
+  [BITCOIN_CHAIN_ID]: getBitcoinNetworkConfig(),
   // ========== 测试网 ==========
   '0xaa36a7': {
     chainId: '0xaa36a7',
@@ -133,7 +173,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainName: 'Arbitrum Sepolia',
     shortName: 'Arb Sepolia',
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc'],
+    rpcUrls: ['https://arbitrum-sepolia-rpc.publicnode.com'],
     blockExplorerUrls: ['https://sepolia.arbiscan.io'],
     iconKey: 'arbitrum',
     iconColor: '#28A0F0',
@@ -177,7 +217,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainName: 'Avalanche Fuji',
     shortName: 'Fuji',
     nativeCurrency: { name: 'AVAX', symbol: 'AVAX', decimals: 18 },
-    rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
+    rpcUrls: ['https://rpc.ankr.com/avalanche_fuji'],
     blockExplorerUrls: ['https://testnet.snowtrace.io'],
     iconKey: 'avalanche',
     iconColor: '#E84142',
@@ -215,36 +255,20 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
 export const PUBLIC_READ_ONLY_RPC: Partial<Record<string, string>> = {
   '0x1': 'https://rpc.ankr.com/eth',
   '0x89': 'https://polygon-rpc.com',
-  '0xa4b1': 'https://arb1.arbitrum.io/rpc',
+  '0xa4b1': 'https://rpc.ankr.com/arbitrum',
   '0xa': 'https://mainnet.optimism.io',
   '0x38': 'https://bsc-dataseed.binance.org',
   '0x2105': 'https://mainnet.base.org',
-  '0xa86a': 'https://api.avax.network/ext/bc/C/rpc',
+  '0xa86a': 'https://rpc.ankr.com/avalanche',
   '0x144': 'https://mainnet.era.zksync.io',
   '0xe708': 'https://rpc.linea.build',
   '0xaa36a7': 'https://ethereum-sepolia.publicnode.com',
   '0x13882': 'https://rpc-amoy.polygon.technology',
-  '0x66eee': 'https://sepolia-rollup.arbitrum.io/rpc',
+  '0x66eee': 'https://arbitrum-sepolia-rpc.publicnode.com',
   '0xaa37dc': 'https://sepolia.optimism.io',
   '0x61': 'https://data-seed-prebsc-1-s1.binance.org:8545',
   '0x14a34': 'https://sepolia.base.org',
-  '0xa869': 'https://api.avax-test.network/ext/bc/C/rpc',
+  '0xa869': 'https://rpc.ankr.com/avalanche_fuji',
   '0x12c': 'https://sepolia.era.zksync.dev',
   '0xe705': 'https://rpc.sepolia.linea.build',
-}
-
-// 按网络类型分组（主网/测试网）
-export const getGroupedNetworks = () => {
-  const mainnetList: [string, NetworkConfig][] = []
-  const testnetList: [string, NetworkConfig][] = []
-  
-  Object.entries(SUPPORTED_NETWORKS).forEach(([chainId, network]) => {
-    if (network.isTestnet) {
-      testnetList.push([chainId, network])
-    } else {
-      mainnetList.push([chainId, network])
-    }
-  })
-  
-  return { mainnetList, testnetList }
 }

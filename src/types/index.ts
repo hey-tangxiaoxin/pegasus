@@ -5,6 +5,8 @@ export interface NetworkConfig {
   chainId: string
   chainName: string
   shortName: string
+  /** 下拉框等展示用的网络名称，如 Ethereum、Solana、BNB Chain */
+  displayName?: string
   nativeCurrency: {
     name: string
     symbol: string

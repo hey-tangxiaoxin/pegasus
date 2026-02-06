@@ -2,7 +2,8 @@ import { memo, useMemo } from 'react'
 import { Card, Select, Badge, Tooltip, Typography } from 'antd'
 import { GlobalOutlined, CheckCircleFilled, UserOutlined } from '@ant-design/icons'
 import type { NetworkConfig, AccountInfo } from '../../types'
-import { SUPPORTED_NETWORKS, getGroupedNetworks, ALL_NETWORKS_CHAIN_ID } from '../../constants'
+import { ALL_NETWORKS_CHAIN_ID } from '../../constants'
+import { useNetworks } from '../../contexts/NetworksContext'
 import { NetworkIcon } from '../NetworkIcon'
 import { formatAddress } from '../../utils/format'
 import styles from './index.module.less'
@@ -19,11 +20,16 @@ interface NetworkSelectorProps {
   accounts: AccountInfo[]
   selectedAccountIndex: number
   onAccountChange: (index: number) => void
+  /** 当前连接的钱包名称，展示在栏最右侧 */
+  connectedWalletName?: string
 }
 
 // Testnet badge style - extracted as constant to avoid recreation
 const TESTNET_BADGE_STYLE = { backgroundColor: '#f5f5f5', color: '#8c8c8c', fontSize: '10px' }
 const TEST_BADGE_STYLE = { backgroundColor: '#fff7e6', color: '#fa8c16', fontSize: '10px', marginLeft: '4px' }
+
+const getNetworkLabel = (network: NetworkConfig) =>
+  network.displayName ?? network.shortName ?? network.chainName
 
 const renderNetworkOption = (
   _chainId: string,
@@ -34,7 +40,7 @@ const renderNetworkOption = (
     <NetworkIcon network={network} size={24} />
     <div className={styles.networkOptionContent}>
       <div className={styles.networkOptionHeader}>
-        <Text strong className={styles.networkName}>{network.shortName}</Text>
+        <Text strong className={styles.networkName}>{getNetworkLabel(network)}</Text>
         {network.isTestnet && (
           <Badge
             count="Testnet"
@@ -50,9 +56,6 @@ const renderNetworkOption = (
   </div>
 )
 
-// Memoize grouped networks since they're static
-const groupedNetworks = getGroupedNetworks()
-
 export const NetworkSelector = memo(({
   currentChainId,
   displayChainId,
@@ -62,17 +65,18 @@ export const NetworkSelector = memo(({
   accounts,
   selectedAccountIndex,
   onAccountChange,
+  connectedWalletName = '',
 }: NetworkSelectorProps) => {
+  const { supportedNetworks, getGroupedNetworks } = useNetworks()
+  const { mainnetList, testnetList } = useMemo(() => getGroupedNetworks(), [getGroupedNetworks])
+
   // Memoize current network lookup（按展示用的 displayChainId，'all' 时显示“所有网络”）
   const currentNetwork = useMemo(() => {
     if (displayChainId === ALL_NETWORKS_CHAIN_ID) return null
-    return displayChainId ? SUPPORTED_NETWORKS[displayChainId] ?? null : null
-  }, [displayChainId])
+    return displayChainId ? supportedNetworks[displayChainId] ?? null : null
+  }, [displayChainId, supportedNetworks])
 
   const isAllNetworks = displayChainId === ALL_NETWORKS_CHAIN_ID
-
-  // Use pre-computed grouped networks
-  const { mainnetList, testnetList } = groupedNetworks
 
   const renderSelectedLabel = () => {
     if (isAllNetworks) {
@@ -94,7 +98,7 @@ export const NetworkSelector = memo(({
     return (
       <div className={styles.selectedLabel}>
         <NetworkIcon network={currentNetwork} size={20} />
-        <span className={styles.selectedName}>{currentNetwork.shortName}</span>
+        <span className={styles.selectedName}>{getNetworkLabel(currentNetwork)}</span>
         {currentNetwork.isTestnet && (
           <Badge
             count="Test"
@@ -243,7 +247,7 @@ export const NetworkSelector = memo(({
           </Tooltip>
         )}
         {currentNetwork && !isAllNetworks && (
-          <Tooltip title={`Connected to ${currentNetwork.chainName}`}>
+          <Tooltip title={`Connected to ${getNetworkLabel(currentNetwork)}`}>
             <div className={styles.statusIndicator}>
               <span className={styles.statusDot} />
               <Text className={styles.statusText}>{currentNetwork.nativeCurrency.symbol}</Text>
@@ -258,6 +262,12 @@ export const NetworkSelector = memo(({
               <Text className={styles.unknownText}>Unknown ({currentChainId})</Text>
             </div>
           </Tooltip>
+        )}
+
+        {connectedWalletName && (
+          <div className={styles.walletName}>
+            <Text className={styles.walletNameText}>{connectedWalletName}</Text>
+          </div>
         )}
       </div>
     </Card>

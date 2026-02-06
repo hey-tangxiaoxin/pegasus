@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useMemo } from 'react'
 import { Form, Spin } from 'antd'
 import './styles/global.less'
 import styles from './App.module.less'
@@ -6,12 +6,11 @@ import styles from './App.module.less'
 // Hooks
 import { useWallet, useTransaction } from './hooks'
 
-
 // Components
-import { 
-  Header, 
-  WelcomeSection, 
-  AccountCard, 
+import {
+  Header,
+  WelcomeSection,
+  AccountCard,
   WalletModal,
   NetworkSelector,
   ActionButtons,
@@ -19,9 +18,12 @@ import {
   SwapModal,
   SendModal,
   ReceiveModal,
+  ContentLoadingPlaceholder,
 } from './components'
 import type { ActionType } from './components'
-import { ALL_NETWORKS_CHAIN_ID } from './constants'
+import { ALL_NETWORKS_CHAIN_ID, SOLANA_CHAIN_ID, BITCOIN_CHAIN_ID } from './constants'
+import { SolanaSection, getDisplayAccount as getSolanaDisplayAccount, getReceiveAddress as getSolanaReceiveAddress } from './features/solana'
+import { BitcoinSection, getDisplayAccount as getBitcoinDisplayAccount, getReceiveAddress as getBitcoinReceiveAddress } from './features/bitcoin'
 
 function App() {
   const [form] = Form.useForm()
@@ -44,7 +46,7 @@ function App() {
     displayChainId,
     isNetworkSwitching,
     nativeSymbol,
-    allNetworksAccountInfo,
+    allNetworksByAccount,
     connectedWalletId,
     connectingWalletId,
     ethersProvider,
@@ -54,7 +56,12 @@ function App() {
     disconnectWallet,
     handleNetworkSwitch,
     fetchAllAccounts,
-    fetchAllNetworksAccount,
+    fetchAllNetworksForAllAccounts,
+    fetchTokensForAccount,
+    solanaAccount,
+    connectSolanaWallet,
+    bitcoinAccount,
+    connectBitcoinWallet,
   } = useWallet()
 
   // Memoize onSuccess callback to avoid unnecessary re-renders
@@ -109,6 +116,39 @@ function App() {
   // Get the currently selected account (must be before useEffects that depend on it)
   const selectedAccount = accountsInfo[selectedAccountIndex]
 
+  const hasAnyWallet = !!(walletInfo.account || solanaAccount || bitcoinAccount)
+
+  const selectorAccounts = useMemo(() => {
+    if (displayChainId === SOLANA_CHAIN_ID) return getSolanaDisplayAccount(solanaAccount)
+    if (displayChainId === BITCOIN_CHAIN_ID) return getBitcoinDisplayAccount(bitcoinAccount)
+    return accountsInfo
+  }, [displayChainId, solanaAccount, bitcoinAccount, accountsInfo])
+
+  const selectorAccountIndex = displayChainId === SOLANA_CHAIN_ID || displayChainId === BITCOIN_CHAIN_ID ? 0 : selectedAccountIndex
+
+  const connectedWalletName = useMemo(() => {
+    if (connectedWalletId) {
+      const w = availableWallets.find(aw => aw.id === connectedWalletId)
+      if (w) return w.name
+    }
+    const parts: string[] = []
+    if (solanaAccount) parts.push('Solana')
+    if (bitcoinAccount) parts.push('Bitcoin')
+    return parts.length ? parts.join(', ') : ''
+  }, [connectedWalletId, availableWallets, solanaAccount, bitcoinAccount])
+
+  const receiveAddress = displayChainId === SOLANA_CHAIN_ID
+    ? getSolanaReceiveAddress(solanaAccount)
+    : displayChainId === BITCOIN_CHAIN_ID
+      ? getBitcoinReceiveAddress(bitcoinAccount)
+      : (selectedAccount?.address ?? '')
+
+  const receiveChainId = displayChainId === SOLANA_CHAIN_ID
+    ? SOLANA_CHAIN_ID
+    : displayChainId === BITCOIN_CHAIN_ID
+      ? BITCOIN_CHAIN_ID
+      : currentChainId
+
   // Reset selected account index when accounts change
   useEffect(() => {
     if (selectedAccountIndex >= accountsInfo.length && accountsInfo.length > 0) {
@@ -116,50 +156,93 @@ function App() {
     }
   }, [accountsInfo.length, selectedAccountIndex])
 
-  // When in "All Networks" view and selected account changes, refetch all-networks data for that account
+  // When "All Networks" is selected, fetch only current account's balances across all networks
   useEffect(() => {
-    if (displayChainId !== ALL_NETWORKS_CHAIN_ID || !selectedAccount?.address) return
-    fetchAllNetworksAccount(selectedAccount.address).catch(() => {})
-  }, [displayChainId, selectedAccount?.address, fetchAllNetworksAccount])
+    if (displayChainId !== ALL_NETWORKS_CHAIN_ID) return
+    if (accountsInfo.length > 0 || solanaAccount || bitcoinAccount) {
+      fetchAllNetworksForAllAccounts(selectedAccountIndex).catch(() => {})
+    }
+  }, [displayChainId, accountsInfo.length, selectedAccountIndex, solanaAccount, bitcoinAccount, fetchAllNetworksForAllAccounts])
+
+  // When selected account changes (EVM single-chain view), load tokens for that account only
+  useEffect(() => {
+    if (displayChainId === SOLANA_CHAIN_ID || displayChainId === BITCOIN_CHAIN_ID || displayChainId === ALL_NETWORKS_CHAIN_ID) return
+    if (accountsInfo.length === 0 || selectedAccountIndex >= accountsInfo.length) return
+    fetchTokensForAccount(selectedAccountIndex)
+  }, [displayChainId, selectedAccountIndex, accountsInfo.length, fetchTokensForAccount])
 
   return (
     <div className={styles.appContainer}>
       <Header
-        account={walletInfo.account}
+        account={walletInfo.account || solanaAccount?.publicKey || bitcoinAccount?.address || ''}
         onConnect={handleConnectWallet}
         onDisconnect={disconnectWallet}
       />
 
       <main className={styles.mainContent}>
-        {!walletInfo.account ? (
-          <WelcomeSection onConnect={handleConnectWallet} />
-        ) : (
-          <div className={loading || loadingAllNetworks ? styles.accountAreaLoading : undefined}>
-            <NetworkSelector
-              currentChainId={currentChainId}
-              displayChainId={displayChainId}
-              isNetworkSwitching={isNetworkSwitching}
-              isDisabled={!walletInfo.account || loading}
-              onNetworkSwitch={handleNetworkSwitch}
-              accounts={accountsInfo}
-              selectedAccountIndex={selectedAccountIndex}
-              onAccountChange={handleAccountChange}
-            />
-
-            <ActionButtons onAction={handleAction} disabled={loading || loadingAllNetworks} />
-
-            <Spin spinning={loading || loadingAllNetworks}>
-              {selectedAccount && (
-                <AccountCard
-                  account={selectedAccount}
-                  nativeSymbol={nativeSymbol}
-                  onTokenClick={handleTokenClick}
-                  allNetworksData={displayChainId === ALL_NETWORKS_CHAIN_ID ? allNetworksAccountInfo : undefined}
+        <div className={styles.contentArea}>
+          {!hasAnyWallet ? (
+            <div className={styles.contentBlock}>
+              <WelcomeSection onConnect={handleConnectWallet} />
+            </div>
+          ) : (
+            <div className={styles.contentBlock}>
+              <div className={loading || loadingAllNetworks ? styles.accountAreaLoading : undefined}>
+                <NetworkSelector
+                  currentChainId={currentChainId}
+                  displayChainId={displayChainId}
+                  isNetworkSwitching={isNetworkSwitching}
+                  isDisabled={!hasAnyWallet || loading}
+                  onNetworkSwitch={handleNetworkSwitch}
+                  accounts={selectorAccounts}
+                  selectedAccountIndex={selectorAccountIndex}
+                  onAccountChange={handleAccountChange}
+                  connectedWalletName={connectedWalletName}
                 />
-              )}
-            </Spin>
-          </div>
-        )}
+
+                <ActionButtons onAction={handleAction} disabled={loading || loadingAllNetworks} />
+
+                <Spin spinning={loading && displayChainId !== ALL_NETWORKS_CHAIN_ID} tip={loading ? 'Loading account...' : undefined}>
+                  {displayChainId === SOLANA_CHAIN_ID ? (
+                    <SolanaSection
+                      account={solanaAccount}
+                      onConnect={connectSolanaWallet}
+                      onTokenClick={handleTokenClick}
+                    />
+                  ) : displayChainId === BITCOIN_CHAIN_ID ? (
+                    <BitcoinSection
+                      account={bitcoinAccount}
+                      onConnect={connectBitcoinWallet}
+                      onTokenClick={handleTokenClick}
+                    />
+                  ) : displayChainId === ALL_NETWORKS_CHAIN_ID ? (
+                    (loadingAllNetworks || !allNetworksByAccount?.length) ? (
+                      <ContentLoadingPlaceholder message="Loading all networks..." showSkeleton />
+                    ) : (
+                      allNetworksByAccount!.map(({ account, networkBalances }) => (
+                        <AccountCard
+                          key={account.address}
+                          account={account}
+                          nativeSymbol={networkBalances[0]?.network?.nativeCurrency.symbol ?? '—'}
+                          onTokenClick={handleTokenClick}
+                          allNetworksData={networkBalances}
+                        />
+                      ))
+                    )
+                  ) : selectedAccount ? (
+                    <AccountCard
+                      account={selectedAccount}
+                      nativeSymbol={nativeSymbol}
+                      onTokenClick={handleTokenClick}
+                    />
+                  ) : (
+                    <ContentLoadingPlaceholder message="Loading account..." showSkeleton />
+                  )}
+                </Spin>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Wallet Modal */}
@@ -200,8 +283,8 @@ function App() {
       <ReceiveModal
         open={isReceiveModalOpen}
         onClose={() => setIsReceiveModalOpen(false)}
-        address={selectedAccount?.address || ''}
-        currentChainId={currentChainId}
+        address={receiveAddress}
+        currentChainId={receiveChainId}
       />
     </div>
   )

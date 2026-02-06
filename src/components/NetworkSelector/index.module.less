@@ -63,6 +63,25 @@
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 24px;
+  width: 100%;
+  min-width: 0;
+
+  @media (min-width: 960px) {
+    flex-wrap: nowrap;
+  }
+}
+
+.walletName {
+  margin-left: auto;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
+
+.walletNameText {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .selectorGroup {
